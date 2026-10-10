@@ -1,0 +1,1375 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Журнал тренировок</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Oswald:wght@500;600&display=swap">
+<style>
+/* Layout: one narrow phone-first column — date bar, entry form, today's sets, then past days. */
+:root {
+  --bg: #eceff3;
+  --surface: #ffffff;
+  --field: #f4f6f9;
+  --ink: #141c26;
+  --muted: #5c6878;
+  --line: #d5dbe3;
+  --accent: #1c4fd6;
+  --accent-ink: #ffffff;
+  --accent-soft: #e3eaff;
+  --danger: #c2332b;
+  --display: "Oswald", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --body: "Golos Text", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10141a; --surface: #1a2029; --field: #131820; --ink: #e9edf3; --muted: #97a3b4;
+    --line: #2c3542; --accent: #7ea2ff; --accent-ink: #0c1322; --accent-soft: #1f2b47; --danger: #ff8278;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10141a; --surface: #1a2029; --field: #131820; --ink: #e9edf3; --muted: #97a3b4;
+  --line: #2c3542; --accent: #7ea2ff; --accent-ink: #0c1322; --accent-soft: #1f2b47; --danger: #ff8278;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--body); font-size: 16px; line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+}
+.app {
+  max-width: 560px; margin: 0 auto;
+  padding-inline: 16px; padding-block: 20px 96px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Header */
+.top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+h1 {
+  margin: 0; font-family: var(--display); font-weight: 600; font-size: 26px;
+  letter-spacing: .02em; text-transform: uppercase; line-height: 1.1;
+}
+.status { font-size: 13px; color: var(--muted); }
+.status.warn { color: var(--danger); }
+
+/* Date bar */
+.datebar { display: flex; align-items: center; gap: 8px; }
+.datebar .when { flex: 1; min-width: 0; text-align: center; }
+.when .day { font-family: var(--display); font-weight: 500; font-size: 20px; letter-spacing: .01em; }
+.when .sub { font-size: 13px; color: var(--muted); }
+.nav {
+  width: 44px; height: 44px; flex: none; border-radius: 12px;
+  border: 1px solid var(--line); background: var(--surface); font-size: 20px; line-height: 1;
+}
+.nav:disabled { opacity: .35; cursor: default; }
+.linkbtn {
+  border: 0; background: none; padding: 2px 0; color: var(--accent);
+  font-size: 13px; font-weight: 500; text-decoration: underline; text-underline-offset: 3px;
+}
+
+/* Entry form */
+.entry {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+  padding: 16px; display: flex; flex-direction: column; gap: 14px;
+}
+label, .lbl { display: block; font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 6px; }
+.text {
+  width: 100%; height: 48px; padding: 0 14px; border-radius: 12px;
+  border: 1px solid var(--line); background: var(--field);
+}
+.text.bad { border-color: var(--danger); }
+.err { font-size: 13px; color: var(--danger); margin-top: 6px; }
+.hint { font-size: 13px; color: var(--muted); margin-top: 6px; }
+.hint b { color: var(--ink); font-weight: 500; }
+.quick { display: flex; flex-wrap: wrap; gap: 8px; }
+.quick button {
+  border: 1px solid var(--line); background: var(--field); border-radius: 999px;
+  padding: 6px 12px; font-size: 14px;
+}
+.quick button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.nums { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.nums > div { min-width: 0; }
+.stepper {
+  display: grid; grid-template-columns: 40px minmax(0, 1fr) 40px; align-items: stretch;
+  height: 52px; border: 1px solid var(--line); border-radius: 12px; background: var(--field); overflow: hidden;
+}
+.stepper button { border: 0; background: none; font-size: 22px; line-height: 1; color: var(--muted); }
+.stepper button:active { background: var(--accent-soft); color: var(--accent); }
+.stepper input {
+  width: 100%; min-width: 0; border: 0; background: none; text-align: center;
+  font-family: var(--display); font-weight: 500; font-size: 24px; padding: 0;
+}
+.stepper input:focus { outline: none; }
+.stepper:focus-within { border-color: var(--accent); }
+.stepper.bad { border-color: var(--danger); }
+.primary {
+  height: 52px; border: 0; border-radius: 12px; background: var(--accent); color: var(--accent-ink);
+  font-weight: 600; font-size: 16px;
+}
+.primary:active { filter: brightness(.92); }
+
+/* Sections */
+.sechead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+h2 {
+  margin: 0; font-family: var(--display); font-weight: 500; font-size: 15px;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+}
+.totals { font-size: 13px; color: var(--muted); }
+.totals b { color: var(--ink); font-weight: 600; }
+.list { display: flex; flex-direction: column; gap: 10px; }
+.empty {
+  border: 1px dashed var(--line); border-radius: 16px; padding: 22px 16px;
+  text-align: center; color: var(--muted); font-size: 15px;
+}
+
+/* Exercise in the day */
+.ex { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+.ex .name { font-weight: 600; font-size: 17px; overflow-wrap: anywhere; }
+.ex .meta { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+.sets { display: flex; flex-wrap: wrap; gap: 8px; }
+.set {
+  display: inline-flex; align-items: center; gap: 8px; height: 40px; padding-left: 10px;
+  border-radius: 10px; background: var(--field); border: 1px solid var(--line);
+}
+.set.new { animation: pop .35s ease-out; }
+@keyframes pop { from { background: var(--accent-soft); transform: scale(.94); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .set.new { animation: none; } }
+.set .n { font-size: 12px; color: var(--muted); min-width: 1ch; }
+.set .v { font-family: var(--display); font-weight: 500; font-size: 18px; white-space: nowrap; }
+.set .v small { font-family: var(--body); font-size: 12px; font-weight: 400; color: var(--muted); }
+.set .del {
+  width: 36px; height: 38px; border: 0; background: none; color: var(--muted);
+  font-size: 18px; line-height: 1; border-radius: 0 9px 9px 0;
+}
+.set .del:hover { color: var(--danger); }
+.again {
+  height: 40px; padding: 0 12px; border-radius: 10px; border: 1px dashed var(--accent);
+  background: none; color: var(--accent); font-size: 14px; font-weight: 500;
+}
+
+/* History */
+.past {
+  display: grid; grid-template-columns: 84px minmax(0, 1fr) auto; gap: 12px; align-items: center;
+  width: 100%; text-align: left; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 14px; padding: 12px 14px;
+}
+.past .d { font-family: var(--display); font-weight: 500; font-size: 16px; }
+.past .d small { display: block; font-family: var(--body); font-weight: 400; font-size: 12px; color: var(--muted); }
+.past .what { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.past .cnt { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.more { align-self: center; }
+
+/* Tabs */
+.tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 4px; }
+.tabs button {
+  flex: 1 1 auto; height: 40px; border: 0; background: none; border-radius: 10px;
+  font-size: 14px; font-weight: 500; color: var(--muted); white-space: nowrap; padding: 0 8px;
+}
+.tabs button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
+.panel { display: flex; flex-direction: column; gap: 20px; }
+
+/* My workout (plan) */
+.planbox { display: flex; flex-direction: column; gap: 14px; }
+.planhead { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.planname { font-family: var(--display); font-weight: 500; font-size: 22px; min-width: 0; overflow-wrap: anywhere; }
+.bar { height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--accent); }
+.exhead { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.exhead .name { min-width: 0; }
+.badge { font-size: 13px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.ex.done { border-color: var(--accent); }
+.ex.done .badge { color: var(--accent); }
+.set.plain { padding-right: 10px; }
+.ex .lbl { margin: 12px 0 6px; }
+.nextrow { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.unit { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.mini {
+  height: 44px; width: 100%; min-width: 0; padding: 0 4px; text-align: center;
+  border: 1px solid var(--line); border-radius: 10px; background: var(--field);
+  font-family: var(--display); font-weight: 500; font-size: 20px;
+}
+.mini.bad { border-color: var(--danger); }
+.dobtn {
+  height: 44px; padding: 0 14px; border: 1px solid var(--accent); border-radius: 10px;
+  background: var(--accent); color: var(--accent-ink); font-weight: 600; font-size: 15px; white-space: nowrap;
+}
+.dobtn.sec { background: none; border-style: dashed; color: var(--accent); }
+.ghost {
+  height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line);
+  background: var(--surface); font-weight: 500; font-size: 15px;
+}
+.ghost.danger { color: var(--danger); }
+.edrow { border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--field); display: flex; flex-direction: column; gap: 10px; }
+.edtop { display: flex; gap: 8px; }
+.edtop .text, .ed3 .mini { background: var(--surface); }
+.xbtn { width: 48px; height: 48px; flex: none; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); font-size: 20px; line-height: 1; color: var(--muted); }
+.ed3 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+select.mini { font-family: var(--body); font-size: 15px; font-weight: 500; text-align: left; padding: 0 8px; color: var(--ink); }
+.edrow > .text { background: var(--surface); }
+.edrow > .lbl { margin: 0; color: var(--ink); font-size: 15px; font-weight: 600; }
+.srows { margin-top: 10px; }
+.srow {
+  display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 10px; align-items: center;
+  min-height: 56px; padding: 6px 0; border-top: 1px solid var(--line);
+}
+.srow .num { font-size: 13px; color: var(--muted); text-align: center; }
+.srow .val { font-family: var(--display); font-weight: 500; font-size: 19px; }
+.srow.todo .val { color: var(--muted); font-weight: 400; }
+.srow .pair { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; align-items: center; }
+.chk {
+  width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--line); background: none;
+  display: inline-flex; align-items: center; justify-content: center; font-size: 20px; line-height: 1;
+  color: transparent; padding: 0; justify-self: end;
+}
+.srow.next .chk { border-color: var(--accent); }
+.chk:not(.on):active { background: var(--accent-soft); }
+.chk.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.ex > .again { margin-top: 8px; }
+.ed3 label { font-size: 12px; margin-bottom: 4px; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.actions .primary { padding: 0 20px; height: 48px; }
+.actions .ghost { height: 48px; }
+
+.delrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-top: 12px; font-size: 14px; }
+.list > .delrow { margin-top: 2px; justify-content: center; }
+.delrow .ghost { height: 40px; }
+.linkbtn.danger { color: var(--danger); }
+
+/* Rest timer setting */
+.rest { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.rest .sw { display: inline-flex; align-items: center; gap: 10px; margin: 0; font-size: 15px; color: var(--ink); cursor: pointer; }
+.rest input[type="checkbox"] { width: 22px; height: 22px; margin: 0; accent-color: var(--accent); }
+
+/* Calendar */
+.calnav { display: flex; align-items: center; gap: 6px; }
+.calnav span { min-width: 9.5em; text-align: center; font-weight: 500; font-size: 15px; }
+.calnav button { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-size: 18px; line-height: 1; }
+.calnav button:disabled { opacity: .35; cursor: default; }
+.cal {
+  display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px;
+}
+.cal .wd { text-align: center; font-size: 12px; color: var(--muted); padding-bottom: 4px; }
+.cal button {
+  aspect-ratio: 1; max-height: 52px; width: 100%; border-radius: 10px; border: 1px solid transparent;
+  background: none; font-size: 15px; padding: 0;
+}
+.cal button.has { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.cal button.today { border-color: var(--line); }
+.cal button.sel { border-color: var(--accent); border-width: 2px; }
+.cal button:disabled { color: var(--muted); opacity: .45; cursor: default; }
+.calnote { font-size: 13px; color: var(--muted); margin-top: 8px; }
+
+/* Running rest timer */
+.timer {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: var(--ink); color: var(--bg);
+}
+.timer.done { background: var(--accent); color: var(--accent-ink); }
+.timer .tfill { position: absolute; left: 0; top: 0; height: 4px; background: var(--accent); width: 100%; }
+.timer.done .tfill { display: none; }
+.timer .tlabel { flex: 1; min-width: 0; font-size: 14px; }
+.timer .ttime { font-family: var(--display); font-weight: 600; font-size: 30px; line-height: 1; }
+.timer button {
+  height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid currentColor;
+  background: none; color: inherit; font-size: 14px; font-weight: 500; white-space: nowrap;
+}
+body.timing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+body.timing .app { padding-bottom: 160px; }
+
+/* Undo toast */
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%); z-index: 6;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  display: flex; align-items: center; gap: 14px; max-width: calc(100% - 32px);
+  background: var(--ink); color: var(--bg); border-radius: 12px; padding: 10px 14px; font-size: 14px;
+}
+.toast button { border: 0; background: none; color: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; padding: 4px 0; }
+</style>
+
+<div class="app">
+  <header class="top">
+    <h1>Журнал тренировок</h1>
+    <div class="status" id="status" aria-live="polite"></div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Разделы">
+    <button type="button" role="tab" data-tab="log" id="tabbtn-log">Журнал</button>
+    <button type="button" role="tab" data-tab="plan" id="tabbtn-plan">Моя тренировка</button>
+    <button type="button" role="tab" data-tab="cal" id="tabbtn-cal">Календарь</button>
+  </nav>
+
+  <div class="panel" id="tab-log">
+  <div class="datebar">
+    <button class="nav" id="prev" type="button" aria-label="Предыдущий день">‹</button>
+    <div class="when">
+      <div class="day" id="dayTitle"></div>
+      <div class="sub" id="daySub"></div>
+    </div>
+    <button class="nav" id="next" type="button" aria-label="Следующий день">›</button>
+  </div>
+
+  <form class="entry" id="form" novalidate autocomplete="off">
+    <div>
+      <label for="exName">Упражнение</label>
+      <input class="text" id="exName" type="text" placeholder="Например, жим лёжа" maxlength="60" enterkeyhint="next">
+      <div class="err" id="nameErr" hidden>Введите название упражнения.</div>
+      <div class="hint" id="lastHint" hidden></div>
+    </div>
+    <div class="quick" id="quick" aria-label="Быстрый выбор упражнения"></div>
+    <div class="nums">
+      <div>
+        <label for="weight">Вес, кг</label>
+        <div class="stepper" id="wBox">
+          <button type="button" data-step="weight" data-by="-2.5" aria-label="Минус 2,5 кг">−</button>
+          <input id="weight" type="text" inputmode="decimal" value="20" aria-describedby="wNote">
+          <button type="button" data-step="weight" data-by="2.5" aria-label="Плюс 2,5 кг">+</button>
+        </div>
+        <div class="hint" id="wNote">0 — свой вес</div>
+      </div>
+      <div>
+        <label for="reps">Повторения</label>
+        <div class="stepper" id="rBox">
+          <button type="button" data-step="reps" data-by="-1" aria-label="Минус одно повторение">−</button>
+          <input id="reps" type="text" inputmode="numeric" value="10">
+          <button type="button" data-step="reps" data-by="1" aria-label="Плюс одно повторение">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="rest">
+      <label class="sw" for="restOn"><input type="checkbox" id="restOn"> Таймер отдыха после подхода</label>
+      <div class="quick" id="restOpts" hidden aria-label="Длительность отдыха"></div>
+    </div>
+    <button class="primary" type="submit">Добавить подход</button>
+  </form>
+
+  <section>
+    <div class="sechead">
+      <h2 id="dayHead">Сегодня</h2>
+      <div class="totals" id="totals"></div>
+    </div>
+    <div class="list" id="dayList"></div>
+  </section>
+  </div>
+
+  <div class="panel" id="tab-plan" hidden>
+    <div class="planbox" id="planView"></div>
+  </div>
+
+  <div class="panel" id="tab-cal" hidden>
+  <section>
+    <div class="sechead">
+      <h2>Календарь</h2>
+      <div class="calnav">
+        <button type="button" id="calPrev" aria-label="Предыдущий месяц">‹</button>
+        <span id="calTitle"></span>
+        <button type="button" id="calNext" aria-label="Следующий месяц">›</button>
+      </div>
+    </div>
+    <div class="cal" id="cal"></div>
+    <div class="calnote" id="calNote"></div>
+  </section>
+
+  <section id="histSec">
+    <div class="sechead"><h2>Прошлые тренировки</h2></div>
+    <div class="list" id="histList"></div>
+  </section>
+  </div>
+</div>
+
+<div class="timer" id="timer" hidden role="timer" aria-live="off">
+  <div class="tfill" id="tFill"></div>
+  <div class="tlabel" id="tLabel">Отдых</div>
+  <div class="ttime" id="tTime"></div>
+  <button type="button" id="tPlus">+30 с</button>
+  <button type="button" id="tStop">Пропустить</button>
+</div>
+
+<div class="toast" id="toast" hidden role="status">
+  <span id="toastText"></span>
+  <button type="button" id="undo">Вернуть</button>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var DEFAULTS = ["Приседания", "Жим лёжа", "Становая тяга", "Подтягивания", "Жим стоя", "Тяга в наклоне"];
+  var HIST_PAGE = 20;
+
+  // ---------- helpers ----------
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function iso(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function toDate(s) { var p = s.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function shift(s, by) { var d = toDate(s); d.setDate(d.getDate() + by); return iso(d); }
+  function today() { return iso(new Date()); }
+  function fmt(s, opts) { return new Intl.DateTimeFormat("ru-RU", opts).format(toDate(s)); }
+  function num(n) { return new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 }).format(n); }
+  function parseNum(v) {
+    var n = parseFloat(String(v).replace(",", ".").replace(/\s/g, ""));
+    return isFinite(n) ? n : NaN;
+  }
+  function plural(n, one, few, many) {
+    var a = Math.abs(n) % 100, b = a % 10;
+    if (a > 10 && a < 20) return many;
+    if (b === 1) return one;
+    if (b >= 2 && b <= 4) return few;
+    return many;
+  }
+  function same(a, b) { return a.trim().toLowerCase() === b.trim().toLowerCase(); }
+  function setText(s) { return s.w > 0 ? num(s.w) + " × " + s.r : "× " + s.r; }
+  function lsGet(k, fallback) {
+    try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; }
+  }
+  function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+  // ---------- state ----------
+  var days = lsGet("wl-days", {}) || {};      // date -> { date, exercises: [{ name, sets: [{w, r}] }] }
+  var dirty = {};                              // dates changed here and not yet confirmed by the cloud
+  (lsGet("wl-dirty", []) || []).forEach(function (d) { dirty[d] = true; });
+  var cur = today();
+  var histShown = HIST_PAGE;
+  var justAdded = null;                        // { name, index } to animate once
+  var undoState = null, undoTimer = null;
+
+  var col = null;                              // cloud collection, when available
+  var cloud = "wait";                          // wait | on | off | denied
+  var saving = {}, again = {}, busy = 0;
+
+  function persistLocal() {
+    lsSet("wl-days", days);
+    lsSet("wl-plans", plans);
+    lsSet("wl-dirty", Object.keys(dirty));
+  }
+  var plans = lsGet("wl-plans", []);          // [{ id, name, items: [{ name, sets, reps, w }] }]
+  if (!Array.isArray(plans)) plans = [];
+  function day(date) { return days[date] || { date: date, exercises: [] }; }
+
+  // ---------- saving ----------
+  function touch(date) {
+    var d = days[date];
+    if (d && !d.exercises.length) delete days[date];
+    dirty[date] = true;
+    persistLocal();
+    flush(date);
+    renderStatus();
+  }
+  // Telegram CloudStorage: one key per day ("d_2026-10-10") and one per plan ("p_<id>"), values up to 4096 chars.
+  var CS = null, planKeys = [], tg = null;
+  function csCall(method, args) {
+    return new Promise(function (res, rej) {
+      try {
+        CS[method].apply(CS, args.concat([function (err, val) {
+          if (err) rej({ code: "unavailable", message: String(err) }); else res(val);
+        }]));
+      } catch (e) { rej({ code: "unavailable", message: String(e) }); }
+    });
+  }
+  function writeOnce(key) {
+    if (key === "plans") {
+      var want = {}, tooBig = false;
+      plans.forEach(function (p) {
+        var v = JSON.stringify(p);
+        if (v.length > 4096) tooBig = true;
+        want["p_" + p.id] = v;
+      });
+      if (tooBig) return Promise.reject({ code: "quota_exceeded" });
+      var gone = planKeys.filter(function (k) { return !(k in want); });
+      return Promise.all(Object.keys(want).map(function (k) { return csCall("setItem", [k, want[k]]); }))
+        .then(function () { return gone.length ? csCall("removeItems", [gone]) : null; })
+        .then(function () { planKeys = Object.keys(want); });
+    }
+    var d = days[key];
+    if (d && d.exercises.length) {
+      var val = JSON.stringify(d.exercises);
+      if (val.length > 4096) return Promise.reject({ code: "quota_exceeded" });
+      return csCall("setItem", ["d_" + key, val]);
+    }
+    return csCall("removeItem", ["d_" + key]);
+  }
+  function flush(date) {
+    if (!col || cloud !== "on") return;
+    if (saving[date]) { again[date] = true; return; }
+    saving[date] = true; busy++; renderStatus();
+    (async function () {
+      try {
+        do {
+          again[date] = false;
+          try { await writeOnce(date); }
+          catch (e) {
+            if (e && (e.code === "invalid_argument" || e.code === "quota_exceeded" || e.code === "revoked" || e.code === "not_granted")) throw e;
+            await new Promise(function (r) { setTimeout(r, 1200 + Math.random() * 800); });
+            await writeOnce(date);
+          }
+        } while (again[date]);
+        delete dirty[date];
+        persistLocal();
+      } catch (e) {
+        cloud = "denied";
+      } finally {
+        saving[date] = false; busy--; renderStatus();
+      }
+    })();
+  }
+  function applyTheme() {
+    if (tg && tg.colorScheme) document.documentElement.setAttribute("data-theme", tg.colorScheme === "dark" ? "dark" : "light");
+  }
+  function haptic(kind) {
+    try {
+      if (!tg || !tg.HapticFeedback) return;
+      if (kind === "done") tg.HapticFeedback.notificationOccurred("success");
+      else tg.HapticFeedback.impactOccurred("light");
+    } catch (e) {}
+  }
+  async function connect() {
+    tg = window.Telegram && window.Telegram.WebApp;
+    if (tg) {
+      try { tg.ready(); tg.expand(); applyTheme(); tg.onEvent("themeChanged", applyTheme); } catch (e) {}
+    }
+    var ok = tg && tg.initData && tg.CloudStorage && tg.isVersionAtLeast && tg.isVersionAtLeast("6.9");
+    if (!ok) { cloud = "off"; renderStatus(); return; }
+    CS = tg.CloudStorage;
+    col = true;
+    try {
+      var keys = (await csCall("getKeys", [])) || [];
+      var dayKeys = keys.filter(function (k) { return /^d_\d{4}-\d{2}-\d{2}$/.test(k); });
+      planKeys = keys.filter(function (k) { return /^p_/.test(k); });
+      var all = dayKeys.concat(planKeys), vals = {};
+      for (var i = 0; i < all.length; i += 50) {
+        var part = await csCall("getItems", [all.slice(i, i + 50)]);
+        Object.keys(part || {}).forEach(function (k) { vals[k] = part[k]; });
+      }
+      var next = {};
+      dayKeys.forEach(function (k) {
+        try {
+          var ex = JSON.parse(vals[k]);
+          if (Array.isArray(ex) && ex.length) next[k.slice(2)] = { date: k.slice(2), exercises: ex };
+        } catch (e) {}
+      });
+      Object.keys(dirty).forEach(function (date) {
+        if (date === "plans") return;
+        if (days[date]) next[date] = days[date]; else delete next[date];
+      });
+      days = next;
+      if (!dirty.plans) {
+        plans = planKeys.slice().sort().map(function (k) {
+          try { var p = JSON.parse(vals[k]); return p && Array.isArray(p.items) ? p : null; } catch (e) { return null; }
+        }).filter(Boolean);
+      }
+      persistLocal();
+      cloud = "on";
+      renderData();
+      renderStatus();
+      Object.keys(dirty).forEach(flush);
+    } catch (e) {
+      cloud = "denied";
+      renderStatus();
+    }
+  }
+  function renderStatus() {
+    var s = $("status"), t = "", warn = false;
+    if (cloud === "on") t = busy ? "Сохраняю…" : "Сохранено в Telegram";
+    else if (cloud === "off") t = "Открыто вне Telegram — записи хранятся только на этом устройстве";
+    else if (cloud === "denied") { t = "Не удалось сохранить в Telegram — записи остаются на этом устройстве"; warn = true; }
+    s.textContent = t;
+    s.classList.toggle("warn", warn);
+  }
+
+  // ---------- lookups ----------
+  function lastTime(name, before) {
+    var dates = Object.keys(days).filter(function (d) { return d < before; }).sort().reverse();
+    for (var i = 0; i < dates.length; i++) {
+      var ex = days[dates[i]].exercises.filter(function (e) { return same(e.name, name); })[0];
+      if (ex && ex.sets.length) return { date: dates[i], sets: ex.sets };
+    }
+    return null;
+  }
+  function recentNames() {
+    var out = [];
+    Object.keys(days).sort().reverse().forEach(function (d) {
+      days[d].exercises.forEach(function (e) {
+        if (!out.some(function (n) { return same(n, e.name); })) out.push(e.name);
+      });
+    });
+    DEFAULTS.forEach(function (n) {
+      if (out.length < 6 && !out.some(function (x) { return same(x, n); })) out.push(n);
+    });
+    return out.slice(0, 8);
+  }
+  function tonnage(d) {
+    var t = 0, sets = 0;
+    d.exercises.forEach(function (e) { e.sets.forEach(function (s) { t += s.w * s.r; sets++; }); });
+    return { kg: t, sets: sets };
+  }
+
+  // ---------- render ----------
+  function renderDate() {
+    var isToday = cur === today();
+    $("dayTitle").textContent = isToday ? "Сегодня" : fmt(cur, { day: "numeric", month: "long" });
+    var sub = $("daySub");
+    sub.textContent = "";
+    if (isToday) {
+      sub.textContent = fmt(cur, { weekday: "long", day: "numeric", month: "long" });
+    } else {
+      sub.appendChild(document.createTextNode(fmt(cur, { weekday: "long", year: "numeric" }) + " · "));
+      var b = el("button", "linkbtn", "к сегодня");
+      b.type = "button";
+      b.addEventListener("click", function () { go(today()); });
+      sub.appendChild(b);
+    }
+    $("next").disabled = isToday;
+    $("dayHead").textContent = isToday ? "Сегодня" : "Эта тренировка";
+  }
+
+  function renderHint() {
+    var name = $("exName").value.trim(), box = $("lastHint");
+    var last = name ? lastTime(name, cur) : null;
+    if (!last) { box.hidden = true; return; }
+    box.textContent = "В прошлый раз, " + fmt(last.date, { day: "numeric", month: "short" }) + ": ";
+    var b = el("b", null, last.sets.map(setText).join(" · "));
+    box.appendChild(b);
+    box.hidden = false;
+  }
+
+  function renderQuick() {
+    var box = $("quick"), name = $("exName").value;
+    box.textContent = "";
+    recentNames().forEach(function (n) {
+      var b = el("button", null, n);
+      b.type = "button";
+      b.setAttribute("aria-pressed", same(n, name) ? "true" : "false");
+      b.addEventListener("click", function () { pick(n); });
+      box.appendChild(b);
+    });
+  }
+
+  function renderDay() {
+    var d = day(cur), list = $("dayList"), tot = $("totals");
+    list.textContent = "";
+    tot.textContent = "";
+    if (!d.exercises.length) {
+      list.appendChild(el("div", "empty", cur === today()
+        ? "Пока ничего не записано. Выберите упражнение, укажите вес и повторения — и нажмите «Добавить подход»."
+        : "В этот день записей нет."));
+      return;
+    }
+    var t = tonnage(d);
+    tot.appendChild(el("b", null, String(t.sets)));
+    tot.appendChild(document.createTextNode(" " + plural(t.sets, "подход", "подхода", "подходов")));
+    if (t.kg > 0) {
+      tot.appendChild(document.createTextNode(" · всего поднято "));
+      tot.appendChild(el("b", null, num(t.kg) + " кг"));
+      tot.title = "Сумма по всем подходам: вес × повторения";
+    }
+    d.exercises.forEach(function (ex, ei) {
+      var card = el("div", "ex");
+      card.appendChild(el("div", "name", ex.name));
+      var kg = 0;
+      ex.sets.forEach(function (s) { kg += s.w * s.r; });
+      card.appendChild(el("div", "meta",
+        ex.sets.length + " " + plural(ex.sets.length, "подход", "подхода", "подходов") + (kg > 0 ? " · поднято " + num(kg) + " кг" : "")));
+      var row = el("div", "sets");
+      ex.sets.forEach(function (s, si) {
+        var chip = el("span", "set");
+        if (justAdded && same(justAdded.name, ex.name) && justAdded.index === si) chip.classList.add("new");
+        chip.appendChild(el("span", "n", String(si + 1)));
+        var v = el("span", "v");
+        if (s.w > 0) {
+          v.appendChild(document.createTextNode(num(s.w) + " "));
+          v.appendChild(el("small", null, "кг"));
+          v.appendChild(document.createTextNode(" × " + s.r));
+        } else {
+          v.textContent = "× " + s.r;
+        }
+        chip.appendChild(v);
+        var del = el("button", "del", "×");
+        del.type = "button";
+        del.setAttribute("aria-label", "Удалить подход " + (si + 1) + ": " + setText(s));
+        del.addEventListener("click", function () { removeSet(ei, si); });
+        chip.appendChild(del);
+        row.appendChild(chip);
+      });
+      var last = ex.sets[ex.sets.length - 1];
+      var more = el("button", "again", "+ ещё " + setText(last));
+      more.type = "button";
+      more.setAttribute("aria-label", "Добавить ещё один такой же подход: " + setText(last));
+      more.addEventListener("click", function () { addSet(ex.name, last.w, last.r); });
+      row.appendChild(more);
+      card.appendChild(row);
+      card.appendChild(confirmRow("ex:" + ei, "Удалить упражнение", "Удалить «" + ex.name + "» и все его подходы?", function () {
+        d.exercises.splice(ei, 1);
+      }));
+      list.appendChild(card);
+    });
+    list.appendChild(confirmRow("day", "Удалить всю тренировку за этот день", "Удалить все записи за этот день?", function () {
+      d.exercises.length = 0;
+    }));
+    justAdded = null;
+  }
+
+  var delAsk = null;                           // which delete is waiting for confirmation
+  function confirmRow(key, label, question, doIt) {
+    var row = el("div", "delrow");
+    if (delAsk !== key) {
+      row.appendChild(btn("linkbtn danger", label, function () { delAsk = key; renderDay(); }));
+      return row;
+    }
+    row.appendChild(el("span", null, question));
+    row.appendChild(btn("ghost danger", "Да, удалить", function () {
+      delAsk = null;
+      hideToast();
+      doIt();
+      touch(cur);
+      renderData();
+    }));
+    row.appendChild(btn("ghost", "Отмена", function () { delAsk = null; renderDay(); }));
+    return row;
+  }
+
+  function renderHistory() {
+    var list = $("histList");
+    list.textContent = "";
+    var dates = Object.keys(days).filter(function (d) { return d !== cur && days[d].exercises.length; }).sort().reverse();
+    $("histSec").hidden = !dates.length;
+    dates.slice(0, histShown).forEach(function (d) {
+      var b = el("button", "past");
+      b.type = "button";
+      var dd = el("span", "d", fmt(d, { day: "numeric", month: "short" }));
+      dd.appendChild(el("small", null, fmt(d, { weekday: "short" }) + (d.slice(0, 4) !== cur.slice(0, 4) ? " " + d.slice(0, 4) : "")));
+      b.appendChild(dd);
+      b.appendChild(el("span", "what", days[d].exercises.map(function (e) { return e.name; }).join(", ")));
+      var t = tonnage(days[d]);
+      b.appendChild(el("span", "cnt", t.sets + " " + plural(t.sets, "подход", "подхода", "подходов")));
+      b.addEventListener("click", function () { go(d); showTab("log"); window.scrollTo({ top: 0, behavior: "smooth" }); });
+      list.appendChild(b);
+    });
+    if (dates.length > histShown) {
+      var m = el("button", "linkbtn more", "Показать ещё");
+      m.type = "button";
+      m.addEventListener("click", function () { histShown += HIST_PAGE; renderHistory(); });
+      list.appendChild(m);
+    }
+  }
+
+  // ---------- calendar ----------
+  var calMonth = cur.slice(0, 7);
+  function renderCalendar() {
+    var y = +calMonth.slice(0, 4), m = +calMonth.slice(5, 7);
+    var name = new Intl.DateTimeFormat("ru-RU", { month: "long" }).format(new Date(y, m - 1, 1));
+    $("calTitle").textContent = name.charAt(0).toUpperCase() + name.slice(1) + " " + y;
+    var grid = $("cal"), now = today(), count = 0;
+    grid.textContent = "";
+    ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].forEach(function (w) { grid.appendChild(el("div", "wd", w)); });
+    var offset = (new Date(y, m - 1, 1).getDay() + 6) % 7, n = new Date(y, m, 0).getDate();
+    for (var i = 0; i < offset; i++) grid.appendChild(el("div"));
+    for (var d = 1; d <= n; d++) (function (date, d) {
+      var b = el("button", null, String(d)), has = !!(days[date] && days[date].exercises.length);
+      b.type = "button";
+      if (has) { b.classList.add("has"); count++; }
+      if (date === now) b.classList.add("today");
+      if (date === cur) b.classList.add("sel");
+      b.disabled = date > now;
+      b.setAttribute("aria-label", fmt(date, { day: "numeric", month: "long" }) + (has ? ", есть тренировка" : ""));
+      b.addEventListener("click", function () { go(date); showTab("log"); window.scrollTo({ top: 0, behavior: "smooth" }); });
+      grid.appendChild(b);
+    })(calMonth + "-" + pad(d), d);
+    $("calNext").disabled = calMonth >= now.slice(0, 7);
+    $("calNote").textContent = count
+      ? "Закрашены дни с тренировками. В этом месяце: " + count + " " + plural(count, "тренировка", "тренировки", "тренировок") + "."
+      : "В этом месяце тренировок нет. Нажмите на день, чтобы открыть его.";
+  }
+  function moveMonth(by) {
+    var d = new Date(+calMonth.slice(0, 4), +calMonth.slice(5, 7) - 1 + by, 1);
+    calMonth = d.getFullYear() + "-" + pad(d.getMonth() + 1);
+    renderCalendar();
+  }
+
+  // ---------- rest timer ----------
+  var REST_OPTS = [[60, "1 мин"], [90, "1:30"], [120, "2 мин"], [180, "3 мин"]];
+  var rest = lsGet("wl-rest", null) || {};
+  rest = { on: !!rest.on, sec: REST_OPTS.some(function (o) { return o[0] === rest.sec; }) ? rest.sec : 90 };
+  var tEnd = 0, tTotal = 0, tInt = null, tHide = null, actx = null, beepGain = null, wake = null;
+
+  function renderRest() {
+    $("restOn").checked = rest.on;
+    var box = $("restOpts");
+    box.hidden = !rest.on;
+    box.textContent = "";
+    REST_OPTS.forEach(function (o) {
+      var b = el("button", null, o[1]);
+      b.type = "button";
+      b.setAttribute("aria-pressed", o[0] === rest.sec ? "true" : "false");
+      b.addEventListener("click", function () { rest.sec = o[0]; lsSet("wl-rest", rest); renderRest(); });
+      box.appendChild(b);
+    });
+  }
+  function cancelBeep() {
+    if (beepGain) { try { beepGain.disconnect(); } catch (e) {} beepGain = null; }
+  }
+  function scheduleBeep(sec) {
+    cancelBeep();
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      actx = actx || new AC();
+      if (actx.state === "suspended") actx.resume();
+      var g = actx.createGain();
+      g.gain.value = 0.3;
+      g.connect(actx.destination);
+      var t0 = actx.currentTime + sec;
+      for (var i = 0; i < 3; i++) {
+        var o = actx.createOscillator();
+        o.frequency.value = 880;
+        o.connect(g);
+        o.start(t0 + i * 0.3);
+        o.stop(t0 + i * 0.3 + 0.18);
+      }
+      beepGain = g;
+    } catch (e) {}
+  }
+  function clock(sec) { return Math.floor(sec / 60) + ":" + pad(sec % 60); }
+  function tick() {
+    var ms = tEnd - Date.now();
+    if (ms <= 0) { finishRest(); return; }
+    $("tTime").textContent = clock(Math.ceil(ms / 1000));
+    $("tFill").style.width = Math.max(0, Math.min(100, ms / (tTotal * 10))) + "%";
+  }
+  function showTimer(on) {
+    $("timer").hidden = !on;
+    document.body.classList.toggle("timing", on);
+  }
+  function releaseWake() { if (wake) { try { wake.release(); } catch (e) {} wake = null; } }
+  function startRest(sec) {
+    var s = sec != null ? sec : (rest.on ? rest.sec : 0);
+    if (!s) return;
+    clearInterval(tInt); clearTimeout(tHide);
+    tTotal = s;
+    tEnd = Date.now() + s * 1000;
+    $("timer").classList.remove("done");
+    $("tLabel").textContent = "Отдых";
+    $("tPlus").hidden = false;
+    $("tStop").textContent = "Пропустить";
+    showTimer(true);
+    scheduleBeep(s);
+    tick();
+    tInt = setInterval(tick, 250);
+    try {
+      if (!wake && navigator.wakeLock) navigator.wakeLock.request("screen").then(function (w) { wake = w; }, function () {});
+    } catch (e) {}
+  }
+  function finishRest() {
+    clearInterval(tInt); tInt = null;
+    $("timer").classList.add("done");
+    $("tLabel").textContent = "Отдых окончен — следующий подход";
+    $("tTime").textContent = "";
+    $("tPlus").hidden = true;
+    $("tStop").textContent = "Закрыть";
+    haptic("done");
+    try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) {}
+    releaseWake();
+    tHide = setTimeout(function () { showTimer(false); }, 8000);
+  }
+  function stopRest() {
+    clearInterval(tInt); tInt = null; clearTimeout(tHide);
+    cancelBeep(); releaseWake();
+    showTimer(false);
+  }
+
+  // ---------- tabs ----------
+  var TABS = ["log", "plan", "cal"];
+  var tab = lsGet("wl-tab", "log");
+  if (TABS.indexOf(tab) < 0) tab = "log";
+  function showTab(t) {
+    tab = t;
+    lsSet("wl-tab", t);
+    TABS.forEach(function (k) {
+      $("tab-" + k).hidden = k !== t;
+      $("tabbtn-" + k).setAttribute("aria-selected", k === t ? "true" : "false");
+    });
+  }
+
+  // ---------- my workout (plan) ----------
+  var planSel = lsGet("wl-plan-sel", null);
+  var editing = null, editErr = "", confirmDel = false, planStale = false, drafts = {};
+
+  function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function btn(cls, text, fn) {
+    var b = el("button", cls, text);
+    b.type = "button";
+    b.addEventListener("click", fn);
+    return b;
+  }
+  function savePlans() { dirty.plans = true; persistLocal(); flush("plans"); renderStatus(); }
+  function doneSets(name) {
+    var ex = day(today()).exercises.filter(function (e) { return same(e.name, name); })[0];
+    return ex ? ex.sets : [];
+  }
+  function planLine(it) {
+    return it.sets + " " + plural(it.sets, "подход", "подхода", "подходов") + " × " + it.reps +
+      (it.w > 0 ? ", " + num(it.w) + " кг" : ", свой вес");
+  }
+
+  var REST_CHOICES = [[0, "Без таймера"], [30, "30 с"], [45, "45 с"], [60, "1 мин"], [90, "1:30"], [120, "2 мин"], [180, "3 мин"], [300, "5 мин"]];
+  var itemEdit = null;                         // { planId, index (-1 = new), draft, err, del }
+  function restOf(it) { return it.rest == null ? 90 : it.rest; }
+  function restLabel(sec) {
+    var o = REST_CHOICES.filter(function (c) { return c[0] === sec; })[0];
+    return o ? o[1] : clock(sec);
+  }
+  function kgText(w, r) { return w > 0 ? num(w) + " кг × " + r : "× " + r; }
+  function draftOf(it) {
+    return { name: it.name, sets: String(it.sets), reps: String(it.reps), w: String(it.w).replace(".", ","), rest: restOf(it) };
+  }
+  function parseItem(d) {
+    var name = d.name.trim().replace(/\s+/g, " ");
+    if (!name) return null;
+    var w = parseNum(d.w);
+    return {
+      name: name,
+      sets: clampInt(d.sets, 3, 20),
+      reps: clampInt(d.reps, 10, 1000),
+      w: w >= 0 ? Math.min(Math.round(w * 100) / 100, 1000) : 0,
+      rest: +d.rest || 0
+    };
+  }
+  function itemFields(it, p) {
+    var g = el("div", "ed3");
+    g.appendChild(labeled("Подходы", bound("mini", p + "sets", it, "sets", "numeric")));
+    g.appendChild(labeled("Повторения", bound("mini", p + "reps", it, "reps", "numeric")));
+    g.appendChild(labeled("Вес, кг", bound("mini", p + "w", it, "w", "decimal")));
+    var s = el("select", "mini");
+    s.id = p + "rest";
+    REST_CHOICES.forEach(function (o) {
+      var op = el("option", null, o[1]);
+      op.value = String(o[0]);
+      s.appendChild(op);
+    });
+    s.value = String(it.rest);
+    s.addEventListener("change", function () { it.rest = +s.value; });
+    g.appendChild(labeled("Отдых после подхода", s));
+    return g;
+  }
+  function removeToday(name, k) {
+    var d = days[today()], ei = -1;
+    if (!d) return;
+    d.exercises.forEach(function (e, i) { if (same(e.name, name)) ei = i; });
+    if (ei >= 0) removeSet(ei, k, today());
+  }
+  function setRow(plan, it, i, k, sets) {
+    var n = sets.length, row = el("div", "srow"), key = plan.id + "|" + i;
+    function tick() {
+      var dr = drafts[key], wi = $("pw-" + i), ri = $("pr-" + i);
+      if (!dr) return;
+      var w = String(dr.w).trim() === "" ? 0 : parseNum(dr.w), r = Math.round(parseNum(dr.r));
+      if (!(w >= 0) || w > 1000) { if (wi) { wi.classList.add("bad"); wi.focus(); } return; }
+      if (!(r >= 1) || r > 1000) { if (ri) { ri.classList.add("bad"); ri.focus(); } return; }
+      if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+      delete drafts[key];
+      addSet(it.name, Math.round(w * 100) / 100, r, today(), restOf(it));
+    }
+    function circle() {
+      var c = btn("chk", "✓", tick);
+      c.setAttribute("aria-label", "Отметить подход выполненным, " + it.name);
+      return c;
+    }
+    row.appendChild(el("span", "num", String(k + 1)));
+    if (k < n) {
+      row.appendChild(el("span", "val", kgText(sets[k].w, sets[k].r)));
+      var on = btn("chk on", "✓", function () { removeToday(it.name, k); });
+      on.setAttribute("aria-label", "Подход " + (k + 1) + " выполнен. Снять отметку");
+      row.appendChild(on);
+    } else if (k === n) {
+      var last = sets[n - 1];
+      var dr = drafts[key] || (drafts[key] = {
+        w: String(last ? last.w : it.w).replace(".", ","),
+        r: String(last ? last.r : it.reps)
+      });
+      row.classList.add("next");
+      var pair = el("div", "pair"), wi = el("input", "mini"), ri = el("input", "mini");
+      wi.id = "pw-" + i; wi.type = "text"; wi.inputMode = "decimal"; wi.value = dr.w;
+      wi.setAttribute("aria-label", "Вес в килограммах, " + it.name);
+      ri.id = "pr-" + i; ri.type = "text"; ri.inputMode = "numeric"; ri.value = dr.r;
+      ri.setAttribute("aria-label", "Повторения, " + it.name);
+      wi.addEventListener("input", function () { dr.w = wi.value; wi.classList.remove("bad"); });
+      ri.addEventListener("input", function () { dr.r = ri.value; ri.classList.remove("bad"); });
+      wi.addEventListener("focus", function () { wi.select(); });
+      ri.addEventListener("focus", function () { ri.select(); });
+      pair.appendChild(wi);
+      pair.appendChild(el("span", "unit", "кг ×"));
+      pair.appendChild(ri);
+      row.appendChild(pair);
+      row.appendChild(circle());
+    } else {
+      row.classList.add("todo");
+      row.appendChild(el("span", "val", kgText(it.w, it.reps)));
+      row.appendChild(circle());
+    }
+    return row;
+  }
+  function openItemEdit(plan, i) {
+    itemEdit = { planId: plan.id, index: i, draft: i < 0 ? blankItem() : draftOf(plan.items[i]), err: "", del: false };
+    renderPlan(true);
+    var f = $("ie-name");
+    if (f && i < 0) f.focus();
+  }
+  function itemEditor(plan) {
+    var s = itemEdit, card = el("div", "edrow");
+    card.appendChild(el("div", "lbl", s.index < 0 ? "Новое упражнение" : "Изменить упражнение"));
+    var n = bound("text", "ie-name", s.draft, "name");
+    n.placeholder = "Название упражнения";
+    n.maxLength = 60;
+    n.setAttribute("aria-label", "Название упражнения");
+    card.appendChild(n);
+    card.appendChild(itemFields(s.draft, "ie-"));
+    if (s.err) card.appendChild(el("div", "err", s.err));
+    var act = el("div", "actions");
+    act.appendChild(btn("primary", "Сохранить", function () {
+      var it = parseItem(s.draft);
+      if (!it) { s.err = "Введите название упражнения."; renderPlan(true); return; }
+      if (s.index < 0) plan.items.push(it); else plan.items[s.index] = it;
+      finishItemEdit(plan);
+    }));
+    act.appendChild(btn("ghost", "Отмена", function () { itemEdit = null; renderPlan(true); }));
+    if (s.index >= 0) {
+      act.appendChild(btn("ghost danger", s.del ? "Точно удалить?" : "Удалить", function () {
+        if (!s.del) { s.del = true; renderPlan(true); return; }
+        plan.items.splice(s.index, 1);
+        finishItemEdit(plan);
+      }));
+    }
+    card.appendChild(act);
+    return card;
+  }
+  function finishItemEdit(plan) {
+    Object.keys(drafts).forEach(function (k) { if (k.indexOf(plan.id + "|") === 0) delete drafts[k]; });
+    itemEdit = null;
+    savePlans();
+    renderPlan(true);
+  }
+
+  function renderPlan(force) {
+    if (editing) return;
+    var box = $("planView"), a = document.activeElement;
+    if (!force && a && (a.tagName === "INPUT" || a.tagName === "SELECT") && box.contains(a)) { planStale = true; return; }
+    planStale = false;
+    box.textContent = "";
+
+    if (!plans.length) {
+      box.appendChild(el("div", "empty",
+        "Составьте свою тренировку: список упражнений с подходами, повторениями и весом. " +
+        "На занятии отмечайте выполненные подходы — они сами попадут в журнал."));
+      box.appendChild(btn("primary", "Создать тренировку", function () { startEdit(null); }));
+      return;
+    }
+
+    var plan = plans.filter(function (p) { return p.id === planSel; })[0] || plans[0];
+    planSel = plan.id;
+
+    var pickRow = el("div", "quick");
+    plans.forEach(function (p) {
+      var b = btn(null, p.name, function () { planSel = p.id; itemEdit = null; lsSet("wl-plan-sel", planSel); renderPlan(true); });
+      b.setAttribute("aria-pressed", p.id === plan.id ? "true" : "false");
+      pickRow.appendChild(b);
+    });
+    pickRow.appendChild(btn(null, "+ Новая", function () { startEdit(null); }));
+    box.appendChild(pickRow);
+
+    var head = el("div", "planhead");
+    head.appendChild(el("div", "planname", plan.name));
+    head.appendChild(btn("ghost", "Изменить", function () { startEdit(plan); }));
+    box.appendChild(head);
+
+    var total = 0, done = 0;
+    plan.items.forEach(function (it) { total += it.sets; done += Math.min(it.sets, doneSets(it.name).length); });
+    var prog = el("div");
+    var t = el("div", "totals");
+    t.appendChild(document.createTextNode("Сегодня выполнено "));
+    t.appendChild(el("b", null, done + " из " + total));
+    t.appendChild(document.createTextNode(" " + plural(total, "подхода", "подходов", "подходов") +
+      (done >= total ? " — тренировка завершена" : "")));
+    prog.appendChild(t);
+    var bar = el("div", "bar"), fill = el("i");
+    bar.style.marginTop = "8px";
+    fill.style.width = (total ? Math.round(done / total * 100) : 0) + "%";
+    bar.appendChild(fill);
+    prog.appendChild(bar);
+    box.appendChild(prog);
+
+    var list = el("div", "list");
+    plan.items.forEach(function (it, i) {
+      if (itemEdit && itemEdit.planId === plan.id && itemEdit.index === i) { list.appendChild(itemEditor(plan)); return; }
+      var sets = doneSets(it.name), n = sets.length, complete = n >= it.sets, restSec = restOf(it);
+      var card = el("div", "ex" + (complete ? " done" : ""));
+      var h = el("div", "exhead");
+      h.appendChild(el("div", "name", it.name));
+      h.appendChild(el("div", "badge", complete ? "✓ выполнено" : n + " из " + it.sets));
+      card.appendChild(h);
+      var meta = el("div", "meta", planLine(it) + " · " + (restSec ? "отдых " + restLabel(restSec) : "без таймера") + " · ");
+      meta.style.marginBottom = "0";
+      meta.appendChild(btn("linkbtn", "изменить", function () { openItemEdit(plan, i); }));
+      card.appendChild(meta);
+      var rows = el("div", "srows"), count = Math.max(it.sets, n);
+      for (var k = 0; k < count; k++) rows.appendChild(setRow(plan, it, i, k, sets));
+      card.appendChild(rows);
+      if (complete && n) {
+        var last = sets[n - 1];
+        card.appendChild(btn("again", "+ ещё подход " + kgText(last.w, last.r), function () {
+          addSet(it.name, last.w, last.r, today(), restSec);
+        }));
+      }
+      list.appendChild(card);
+    });
+    if (itemEdit && itemEdit.planId === plan.id && itemEdit.index === -1) list.appendChild(itemEditor(plan));
+    box.appendChild(list);
+    if (!itemEdit) box.appendChild(btn("again", "+ Добавить упражнение", function () { openItemEdit(plan, -1); }));
+    box.appendChild(el("div", "hint", "Нажмите на кружок справа — подход отметится, запишется в журнал за сегодня и включится таймер отдыха. Повторное нажатие на галочку снимает отметку."));
+  }
+
+  function blankItem() { return { name: "", sets: "3", reps: "10", w: "20", rest: 90 }; }
+  function startEdit(plan) {
+    editing = plan
+      ? { id: plan.id, name: plan.name, isNew: false, items: plan.items.map(draftOf) }
+      : { id: newId(), name: "", isNew: true, items: [blankItem()] };
+    if (!editing.items.length) editing.items.push(blankItem());
+    editErr = ""; confirmDel = false;
+    renderEditor();
+  }
+  function bound(cls, id, obj, key, mode) {
+    var i = el("input", cls);
+    i.id = id; i.type = "text"; i.value = obj[key];
+    if (mode) i.inputMode = mode;
+    i.addEventListener("input", function () { obj[key] = i.value; });
+    return i;
+  }
+  function labeled(text, input) {
+    var w = el("div"), l = el("label", null, text);
+    l.htmlFor = input.id;
+    w.appendChild(l); w.appendChild(input);
+    return w;
+  }
+  function renderEditor() {
+    var box = $("planView"), e = editing;
+    box.textContent = "";
+    box.appendChild(el("div", "planname", e.isNew ? "Новая тренировка" : "Изменить тренировку"));
+
+    var nameIn = bound("text", "planName", e, "name");
+    nameIn.placeholder = "Например, день ног";
+    nameIn.maxLength = 40;
+    box.appendChild(labeled("Название", nameIn));
+
+    var list = el("div", "list");
+    e.items.forEach(function (it, i) {
+      var row = el("div", "edrow"), top = el("div", "edtop");
+      var n = bound("text", "ed-name-" + i, it, "name");
+      n.placeholder = "Упражнение " + (i + 1);
+      n.maxLength = 60;
+      n.setAttribute("aria-label", "Название упражнения " + (i + 1));
+      top.appendChild(n);
+      var x = btn("xbtn", "×", function () {
+        e.items.splice(i, 1);
+        if (!e.items.length) e.items.push(blankItem());
+        renderEditor();
+      });
+      x.setAttribute("aria-label", "Убрать упражнение " + (i + 1));
+      top.appendChild(x);
+      row.appendChild(top);
+      row.appendChild(itemFields(it, "ed-" + i + "-"));
+      list.appendChild(row);
+    });
+    box.appendChild(list);
+    box.appendChild(btn("again", "+ Добавить упражнение", function () {
+      e.items.push(blankItem());
+      renderEditor();
+      var f = $("ed-name-" + (e.items.length - 1));
+      if (f) f.focus();
+    }));
+    if (editErr) box.appendChild(el("div", "err", editErr));
+
+    var act = el("div", "actions");
+    act.appendChild(btn("primary", "Сохранить", saveEdit));
+    act.appendChild(btn("ghost", "Отмена", function () { editing = null; renderPlan(); }));
+    if (!e.isNew) {
+      act.appendChild(btn("ghost danger", confirmDel ? "Точно удалить?" : "Удалить", function () {
+        if (!confirmDel) { confirmDel = true; renderEditor(); return; }
+        plans = plans.filter(function (p) { return p.id !== e.id; });
+        editing = null;
+        savePlans();
+        renderPlan();
+      }));
+    }
+    box.appendChild(act);
+  }
+  function clampInt(v, def, max) {
+    var n = Math.round(parseNum(v));
+    return n >= 1 ? Math.min(n, max) : def;
+  }
+  function saveEdit() {
+    var e = editing, items = [];
+    e.items.forEach(function (d) {
+      var it = parseItem(d);
+      if (it) items.push(it);
+    });
+    if (!items.length) { editErr = "Добавьте хотя бы одно упражнение с названием."; renderEditor(); return; }
+    var plan = { id: e.id, name: e.name.trim() || "Тренировка " + (plans.length + (e.isNew ? 1 : 0)), items: items };
+    var at = -1;
+    plans.forEach(function (p, i) { if (p.id === plan.id) at = i; });
+    if (at >= 0) plans[at] = plan; else plans.push(plan);
+    planSel = plan.id;
+    lsSet("wl-plan-sel", planSel);
+    Object.keys(drafts).forEach(function (k) { if (k.indexOf(plan.id + "|") === 0) delete drafts[k]; });
+    editing = null;
+    savePlans();
+    renderPlan();
+  }
+
+  function renderData() { renderQuick(); renderHint(); renderDay(); renderPlan(); renderCalendar(); renderHistory(); }
+  function renderAll() { renderDate(); renderData(); renderStatus(); }
+
+  // ---------- actions ----------
+  function go(date) {
+    if (date > today()) return;
+    cur = date;
+    delAsk = null;
+    calMonth = date.slice(0, 7);
+    renderDate(); renderData();
+  }
+  function pick(name) {
+    $("exName").value = name;
+    clearErrors();
+    var cd = day(cur).exercises.filter(function (e) { return same(e.name, name); })[0];
+    var src = cd && cd.sets.length ? cd.sets[cd.sets.length - 1] : null;
+    if (!src) { var last = lastTime(name, cur); if (last) src = last.sets[0]; }
+    if (src) { $("weight").value = num(src.w).replace(/\s/g, ""); $("reps").value = String(src.r); }
+    renderQuick(); renderHint();
+  }
+  function addSet(name, w, r, when, restSec) {
+    var date = when || cur;
+    var d = days[date] || (days[date] = { date: date, exercises: [] });
+    var ex = d.exercises.filter(function (e) { return same(e.name, name); })[0];
+    if (!ex) { ex = { name: name, sets: [] }; d.exercises.push(ex); }
+    ex.sets.push({ w: w, r: r });
+    justAdded = { name: ex.name, index: ex.sets.length - 1 };
+    haptic("tap");
+    hideToast();
+    touch(date);
+    renderData();
+    startRest(restSec);
+  }
+  function removeSet(ei, si, when) {
+    var date = when || cur;
+    var d = days[date];
+    if (!d || !d.exercises[ei]) return;
+    var ex = d.exercises[ei], removed = ex.sets.splice(si, 1)[0];
+    var exGone = !ex.sets.length;
+    if (exGone) d.exercises.splice(ei, 1);
+    undoState = { date: date, name: ex.name, ei: ei, si: si, set: removed, exGone: exGone };
+    touch(date);
+    renderData();
+    showToast("Подход удалён: " + setText(removed));
+  }
+  function undo() {
+    var u = undoState;
+    if (!u) return;
+    var d = days[u.date] || (days[u.date] = { date: u.date, exercises: [] });
+    var ex = d.exercises.filter(function (e) { return same(e.name, u.name); })[0];
+    if (!ex) { ex = { name: u.name, sets: [] }; d.exercises.splice(Math.min(u.ei, d.exercises.length), 0, ex); }
+    ex.sets.splice(Math.min(u.si, ex.sets.length), 0, u.set);
+    hideToast();
+    touch(u.date);
+    renderData();
+  }
+  function showToast(text) {
+    $("toastText").textContent = text;
+    $("toast").hidden = false;
+    clearTimeout(undoTimer);
+    undoTimer = setTimeout(hideToast, 6000);
+  }
+  function hideToast() { clearTimeout(undoTimer); $("toast").hidden = true; undoState = null; }
+  function clearErrors() {
+    $("nameErr").hidden = true;
+    $("exName").classList.remove("bad");
+    $("wBox").classList.remove("bad");
+    $("rBox").classList.remove("bad");
+  }
+
+  // ---------- events ----------
+  $("form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    clearErrors();
+    var name = $("exName").value.trim().replace(/\s+/g, " ");
+    var w = $("weight").value.trim() === "" ? 0 : parseNum($("weight").value);
+    var r = Math.round(parseNum($("reps").value));
+    if (!name) { $("nameErr").hidden = false; $("exName").classList.add("bad"); $("exName").focus(); return; }
+    if (!(w >= 0) || w > 1000) { $("wBox").classList.add("bad"); $("weight").focus(); return; }
+    if (!(r >= 1) || r > 1000) { $("rBox").classList.add("bad"); $("reps").focus(); return; }
+    w = Math.round(w * 100) / 100;
+    addSet(name, w, r);
+  });
+  $("exName").addEventListener("input", function () { clearErrors(); renderQuick(); renderHint(); });
+  document.querySelectorAll("[data-step]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var input = $(b.getAttribute("data-step")), by = parseFloat(b.getAttribute("data-by"));
+      var v = parseNum(input.value);
+      if (!isFinite(v)) v = 0;
+      var min = input.id === "reps" ? 1 : 0;
+      v = Math.max(min, Math.round((v + by) * 100) / 100);
+      input.value = String(v).replace(".", ",");
+      clearErrors();
+    });
+  });
+  ["weight", "reps"].forEach(function (id) {
+    $(id).addEventListener("focus", function () { this.select(); });
+    $(id).addEventListener("input", clearErrors);
+  });
+  $("prev").addEventListener("click", function () { go(shift(cur, -1)); });
+  $("next").addEventListener("click", function () { go(shift(cur, 1)); });
+  $("undo").addEventListener("click", undo);
+  $("calPrev").addEventListener("click", function () { moveMonth(-1); });
+  $("calNext").addEventListener("click", function () { moveMonth(1); });
+  $("restOn").addEventListener("change", function () {
+    rest.on = this.checked;
+    lsSet("wl-rest", rest);
+    renderRest();
+    if (!rest.on) stopRest();
+  });
+  $("tPlus").addEventListener("click", function () {
+    tEnd += 30000; tTotal += 30;
+    scheduleBeep(Math.max(0, (tEnd - Date.now()) / 1000));
+    tick();
+  });
+  $("tStop").addEventListener("click", stopRest);
+  renderRest();
+  TABS.forEach(function (k) {
+    $("tabbtn-" + k).addEventListener("click", function () { showTab(k); });
+  });
+  $("planView").addEventListener("focusout", function () {
+    if (planStale) setTimeout(renderPlan, 0);
+  });
+  showTab(tab);
+
+  renderAll();
+  connect();
+})();
+</script>
+
+</body>
+</html>
