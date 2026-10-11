@@ -351,8 +351,7 @@ body.timing .app { padding-bottom: 160px; }
     <button type="button" role="tab" data-tab="cal" id="tabbtn-cal">Календарь</button>
   </nav>
 
-  <div class="panel" id="tab-log">
-  <div class="datebar">
+  <div class="datebar" id="datebar">
     <button class="nav" id="prev" type="button" aria-label="Предыдущий день">‹</button>
     <div class="when">
       <div class="day" id="dayTitle"></div>
@@ -361,6 +360,7 @@ body.timing .app { padding-bottom: 160px; }
     <button class="nav" id="next" type="button" aria-label="Следующий день">›</button>
   </div>
 
+  <div class="panel" id="tab-log">
   <form class="entry" id="form" novalidate autocomplete="off">
     <div>
       <label for="exName">Упражнение</label>
@@ -943,6 +943,7 @@ body.timing .app { padding-bottom: 160px; }
     lsSet("wl-tab", t);
     TABS.forEach(function (k) {
       $("tab-" + k).hidden = k !== t;
+      $("datebar").hidden = t === "cal";
       $("tabbtn-" + k).setAttribute("aria-selected", k === t ? "true" : "false");
     });
   }
@@ -960,7 +961,7 @@ body.timing .app { padding-bottom: 160px; }
   }
   function savePlans() { dirty.plans = true; persistLocal(); flush("plans"); renderStatus(); }
   function doneSets(name) {
-    var ex = day(today()).exercises.filter(function (e) { return same(e.name, name); })[0];
+    var ex = day(cur).exercises.filter(function (e) { return same(e.name, name); })[0];
     return ex ? ex.sets : [];
   }
   function planLine(it) {
@@ -1009,10 +1010,10 @@ body.timing .app { padding-bottom: 160px; }
     return g;
   }
   function removeToday(name, k) {
-    var d = days[today()], ei = -1;
+    var d = days[cur], ei = -1;
     if (!d) return;
     d.exercises.forEach(function (e, i) { if (same(e.name, name)) ei = i; });
-    if (ei >= 0) removeSet(ei, k, today());
+    if (ei >= 0) removeSet(ei, k, cur);
   }
   function setRow(plan, it, i, k, sets) {
     var n = sets.length, row = el("div", "srow"), key = plan.id + "|" + i;
@@ -1024,7 +1025,7 @@ body.timing .app { padding-bottom: 160px; }
       if (!(r >= 1) || r > 1000) { if (ri) { ri.classList.add("bad"); ri.focus(); } return; }
       if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
       delete drafts[key];
-      addSet(it.name, Math.round(w * 100) / 100, r, today(), restOf(it));
+      addSet(it.name, Math.round(w * 100) / 100, r, cur, restOf(it));
     }
     function circle() {
       var c = btn("chk", "✓", tick);
@@ -1232,18 +1233,24 @@ body.timing .app { padding-bottom: 160px; }
 
   var DOW = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
   var DOW_FULL = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
-  function todayDow() { return (new Date().getDay() + 6) % 7; }
   function planDays(p) { return Array.isArray(p.days) ? p.days : []; }
-  var autoPicked = false;
-  function pickTodayPlan() {
-    if (autoPicked || !plans.length) return;
-    autoPicked = true;
-    var p = plans.filter(function (x) { return planDays(x).indexOf(todayDow()) >= 0; })[0];
-    if (p) planSel = p.id;
+  function curDow() { return (toDate(cur).getDay() + 6) % 7; }
+  // Show the workout that belongs to the selected day: the one whose exercises were logged then, else the one scheduled for that weekday.
+  var pickedFor = null;
+  function pickPlanForDay() {
+    if (pickedFor === cur || !plans.length) return;
+    pickedFor = cur;
+    var logged = day(cur).exercises, best = null, bestN = 0;
+    plans.forEach(function (p) {
+      var n = p.items.filter(function (it) { return logged.some(function (e) { return same(e.name, it.name) && e.sets.length; }); }).length;
+      if (n > bestN) { bestN = n; best = p; }
+    });
+    if (!best) best = plans.filter(function (x) { return planDays(x).indexOf(curDow()) >= 0; })[0];
+    if (best) planSel = best.id;
   }
 
   function renderPlan(force) {
-    pickTodayPlan();
+    pickPlanForDay();
     if (editing) return;
     var box = $("planView"), a = document.activeElement;
     if (!force && a && (a.tagName === "INPUT" || a.tagName === "SELECT") && box.contains(a)) { planStale = true; return; }
@@ -1277,8 +1284,8 @@ body.timing .app { padding-bottom: 160px; }
     if (planDays(plan).length) {
       var dw = el("div", "dow");
       planDays(plan).forEach(function (d) {
-        var chip = el("span", d === todayDow() ? "now" : null, DOW[d]);
-        chip.title = DOW_FULL[d] + (d === todayDow() ? " — сегодня" : "");
+        var chip = el("span", d === curDow() ? "now" : null, DOW[d]);
+        chip.title = DOW_FULL[d];
         dw.appendChild(chip);
       });
       title.appendChild(dw);
@@ -1291,7 +1298,7 @@ body.timing .app { padding-bottom: 160px; }
     plan.items.forEach(function (it) { total += it.sets; done += Math.min(it.sets, doneSets(it.name).length); });
     var prog = el("div");
     var t = el("div", "totals");
-    t.appendChild(document.createTextNode("Сегодня выполнено "));
+    t.appendChild(document.createTextNode((cur === today() ? "Сегодня" : fmt(cur, { day: "numeric", month: "long" })) + " выполнено "));
     t.appendChild(el("b", null, done + " из " + total));
     t.appendChild(document.createTextNode(" " + plural(total, "подхода", "подходов", "подходов") +
       (done >= total ? " — тренировка завершена" : "")));
@@ -1322,7 +1329,7 @@ body.timing .app { padding-bottom: 160px; }
         renderPlan(true);
       }));
       card.appendChild(meta);
-      var prev = lastTime(it.name, today());
+      var prev = lastTime(it.name, cur);
       if (prev) {
         var ph = el("div", "hint", "В прошлый раз, " + fmt(prev.date, { day: "numeric", month: "short" }) + ": ");
         ph.appendChild(el("b", null, prev.sets.map(setText).join(" · ")));
@@ -1335,7 +1342,7 @@ body.timing .app { padding-bottom: 160px; }
       if (complete && n) {
         var last = sets[n - 1];
         card.appendChild(btn("again", "+ ещё подход " + kgText(last.w, last.r), function () {
-          addSet(it.name, last.w, last.r, today(), restSec);
+          addSet(it.name, last.w, last.r, cur, restSec);
         }));
       }
       if (histOpen[hkey]) card.appendChild(historyPanel(it));
@@ -1344,7 +1351,7 @@ body.timing .app { padding-bottom: 160px; }
     if (itemEdit && itemEdit.planId === plan.id && itemEdit.index === -1) list.appendChild(itemEditor(plan));
     box.appendChild(list);
     if (!itemEdit) box.appendChild(btn("again", "+ Добавить упражнение", function () { openItemEdit(plan, -1); }));
-    box.appendChild(el("div", "hint", "Нажмите на кружок справа — подход отметится, запишется в журнал за сегодня и включится таймер отдыха. Повторное нажатие на галочку снимает отметку."));
+    box.appendChild(el("div", "hint", "Нажмите на кружок справа — подход отметится и запишется в журнал за выбранный день; для сегодняшнего дня включится таймер отдыха. Повторное нажатие на галочку снимает отметку."));
   }
 
   function blankItem() { return { name: "", sets: "3", reps: "10", w: "20", rest: 90 }; }
@@ -1471,6 +1478,8 @@ body.timing .app { padding-bottom: 160px; }
     if (date > today()) return;
     cur = date;
     delAsk = null;
+    itemEdit = null;
+    drafts = {};
     calMonth = date.slice(0, 7);
     renderDate(); renderData();
   }
@@ -1494,7 +1503,7 @@ body.timing .app { padding-bottom: 160px; }
     hideToast();
     touch(date);
     renderData();
-    startRest(restSec);
+    if (date === today()) startRest(restSec);
   }
   function removeSet(ei, si, when) {
     var date = when || cur;
