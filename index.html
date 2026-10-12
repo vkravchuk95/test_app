@@ -902,6 +902,103 @@ body.timing .app { padding-bottom: 160px; }
     uk: ["Присідання", "Жим лежачи", "Станова тяга", "Підтягування", "Жим стоячи", "Тяга в нахилі"],
     en: ["Squat", "Bench press", "Deadlift", "Pull-ups", "Overhead press", "Bent-over row"]
   };
+  // ---------- Czech ----------
+  LOCALES.cs = "cs-CZ";
+  LANG_NAMES.cs = "Čeština";
+  I18N.cs = {
+    "ses.extra1": "Doplňkový cvik", "ses.extraN": "Doplňkové cviky", "ses.journal": "Přidáno v deníku",
+    "ses.thatDay": "Hotovo ten den", "ses.edit": "upravit", "ses.editAria": "Upravit trénink: znovu ho otevřít",
+    "ses.early": "Hotovo {x} z {y} {sets}. Ukončit trénink teď?", "ses.yesFinish": "Ano, ukončit", "ses.keep": "Pokračovat",
+    "ses.finish": "Ukončit trénink", "ses.running": "probíhá od {t}", "ses.live": "probíhá", "ses.doneAt": "ukončen v {t}",
+    "ses.finished": "Trénink ukončen: {x}", "ses.del": "Smazat tento trénink", "ses.delQ": "Smazat tento trénink se všemi sériemi?",
+    "ses.earlier": "Dnes už hotovo",
+    "type.w": "Váha", "type.bw": "Vlastní váha", "type.time": "Čas", "type.cardio": "Kardio", "f.type": "Typ cviku",
+    "f.extra": "Přidaná váha, kg", "log.extraNote": "0 — bez přidané váhy", "f.time": "Čas série", "f.dur": "Doba",
+    "f.dist": "Vzdálenost, km", "log.durNote": "min:s, např. 1:30", "log.tMinus": "Méně", "log.tPlus": "Více",
+    "log.dMinus": "Minus 0,5 km", "log.dPlus": "Plus 0,5 km",
+    "plan.noExtra": "bez přidané váhy", "plan.extraW": "Přidaná váha pro tento trénink", "plan.timeToday": "Čas série pro tento trénink",
+    "plan.tDown": "O 15 sekund méně, {n}", "plan.tUp": "O 15 sekund více, {n}",
+    "work.label": "Série: {n}", "work.stop": "Stop", "plan.startAria": "Spustit sérii s odpočtem, {n}",
+    "plan.durAria": "Doba, {n}", "plan.distAria": "Vzdálenost, {n}",
+    "plan.hintTime": "U cviků na čas spustí ▶ odpočet; „Stop“ zapíše skutečný čas.",
+    "ph.bestE": "Nejvyšší přidaná váha: ", "ph.bestT": "Nejdelší série: ", "ph.bestD": "Vzdálenost za trénink: ", "ph.bestDur": "Čas za trénink: ",
+    "ph.mE": "přidaná váha", "ph.mT": "čas série", "ph.mD": "vzdálenost", "ph.mDur": "doba",
+    "u.km": "km", "u.pace": "{p} min/km",
+    "app.title": "Tréninkový deník",
+    "tab.log": "Deník", "tab.plan": "Můj trénink", "tab.cal": "Kalendář", "nav.tabs": "Sekce",
+    "date.prev": "Předchozí den", "date.next": "Další den", "date.today": "Dnes", "date.toToday": "zpět na dnešek",
+    "log.exercise": "Cvik", "log.exPh": "Např. bench press", "log.nameErr": "Zadejte název cviku.",
+    "log.quickAria": "Rychlý výběr cviku", "log.wMinus": "Minus 2,5 kg", "log.wPlus": "Plus 2,5 kg",
+    "log.bw": "0 — vlastní váha", "log.rMinus": "O jedno opakování méně", "log.rPlus": "O jedno opakování více",
+    "log.restOn": "Časovač pauzy po sérii", "log.restAria": "Délka pauzy", "log.add": "Přidat sérii",
+    "log.dayToday": "Dnes", "log.dayOther": "Tento trénink",
+    "log.emptyToday": "Zatím nic zapsáno. Vyberte cvik, zadejte váhu a opakování a klepněte na „Přidat sérii“.",
+    "log.emptyDay": "V tento den nejsou žádné záznamy.",
+    "lastTime": "Minule, {d}: ",
+    "lifted.total": "celkem zvednuto", "lifted.title": "Součet váha × opakování za všechny série", "lifted.ex": "zvednuto",
+    "kg": "kg", "bodyweight": "vlastní váha",
+    "del.setAria": "Smazat sérii {n}: {s}", "log.more": "+ další {s}", "log.moreAria": "Přidat stejnou sérii znovu: {s}",
+    "del.ex": "Smazat cvik", "del.exQ": "Smazat „{n}“ a všechny jeho série?",
+    "del.day": "Smazat celý trénink tohoto dne", "del.dayQ": "Smazat všechny záznamy tohoto dne?",
+    "del.yes": "Ano, smazat", "cancel": "Zrušit", "save": "Uložit", "delete": "Smazat", "deleteSure": "Opravdu smazat?",
+    "hist.title": "Minulé tréninky", "hist.more": "Zobrazit další",
+    "cal.prev": "Předchozí měsíc", "cal.next": "Další měsíc", "cal.hasAria": ", trénink zapsán",
+    "cal.note": "Vybarvené dny mají trénink. Tento měsíc: {n}.", "cal.noneMonth": "Tento měsíc žádné tréninky.",
+    "cal.dayEmpty": "V tento den nebyl trénink.", "cal.openLog": "Otevřít v deníku",
+    "cal.openPlan": "Otevřít v Mém tréninku", "cal.free": "Volný trénink",
+    "rest.label": "Pauza", "rest.done": "Pauza skončila — další série", "rest.skip": "Přeskočit", "rest.close": "Zavřít",
+    "rest.plus": "+30 s", "rest.none": "Bez časovače", "u.sec": "{n} s", "u.min": "{n} min",
+    "undo": "Vrátit", "toast.setDel": "Série smazána: {s}",
+    "plan.empty": "Sestavte si trénink: seznam cviků se sériemi, opakováními a váhou. Během tréninku odškrtávejte hotové série — samy se zapíšou do deníku.",
+    "plan.create": "Vytvořit trénink", "plan.new": "+ Nový", "plan.edit": "Upravit",
+    "plan.progPre": "{d} hotovo ", "plan.of": "{x} z {y}", "plan.progSuf": " {sets}", "plan.finished": " — trénink dokončen",
+    "plan.badgeDone": "✓ hotovo", "plan.restX": "pauza {x}", "plan.noTimer": "bez časovače",
+    "plan.editLink": "upravit", "plan.progress": "pokrok", "plan.hideProgress": "skrýt pokrok",
+    "plan.weightToday": "Váha pro tento trénink", "plan.wDown": "Snížit váhu o 2,5 kg, {n}", "plan.wUp": "Zvýšit váhu o 2,5 kg, {n}",
+    "plan.more": "+ ještě jedna série {s}", "plan.addEx": "+ Přidat cvik",
+    "plan.hint": "Klepnutím na kroužek vpravo odškrtnete sérii — zapíše se do deníku pro vybraný den a u dnešního dne se spustí časovač pauzy. Dalším klepnutím na fajfku označení zrušíte.",
+    "plan.tickAria": "Označit sérii jako hotovou, {n}", "plan.untickAria": "Série {k} hotová. Zrušit označení",
+    "plan.wAria": "Váha v kg, {n}", "plan.rAria": "Opakování, {n}", "unitKgX": "kg ×",
+    "ie.new": "Nový cvik", "ie.edit": "Upravit cvik", "ie.namePh": "Název cviku",
+    "f.sets": "Série", "f.reps": "Opakování", "f.w": "Váha, kg", "f.rest": "Pauza po sérii",
+    "ed.new": "Nový trénink", "ed.edit": "Upravit trénink", "ed.name": "Název", "ed.namePh": "Např. den nohou",
+    "ed.days": "Den v týdnu — můžete vybrat více", "ed.exPh": "Cvik {n}", "ed.exAria": "Název cviku {n}",
+    "ed.rmAria": "Odebrat cvik {n}", "ed.errItems": "Přidejte alespoň jeden cvik s názvem.",
+    "ed.errDays": "Vyberte den v týdnu pro tento trénink.", "ed.defName": "Trénink {n}",
+    "ph.none": "Zatím žádná historie — objeví se po první odškrtnuté sérii.",
+    "ph.bestW": "Nejvyšší váha za trénink: ", "ph.bestR": "Nejvíc opakování v sérii: ", "ph.repsUnit": "opak.",
+    "ph.over": "za {n} {w}", "ph.one": ". Graf se objeví po druhém tréninku.",
+    "ph.chartAria": "Graf: {m} podle tréninků, {n}", "ph.mW": "nejvyšší váha", "ph.mR": "nejvíc opakování",
+    "st.cloud": "Uloženo v cloudu", "st.saving": "Ukládám…", "st.local": "Uloženo jen v tomto prohlížeči",
+    "st.denied": "Cloud není dostupný — záznamy zůstávají v tomto prohlížeči",
+    "st.tg": "Uloženo v Telegramu", "st.tgLocal": "Otevřeno mimo Telegram — záznamy zůstávají jen v tomto zařízení",
+    "st.tgDenied": "Uložení do Telegramu se nezdařilo — záznamy zůstávají v tomto zařízení",
+    "set.title": "Nastavení", "set.back": "← Zpět", "set.display": "Co zobrazovat",
+    "set.showProgress": "Odkaz „pokrok“ v Mém tréninku", "set.showTotals": "„Celkem zvednuto“ (váha × opakování)",
+    "set.lang": "Jazyk", "set.backup": "Záloha",
+    "set.size": "Velikost rozhraní", "set.size0": "Malá", "set.size1": "Normální", "set.size2": "Velká", "set.size3": "Velmi velká",
+    "plan.choose": "Vyberte trénink nahoře — rozbalí se.",
+    "set.backupNote": "Soubor se všemi tréninky a plány. Uschovejte si ho, abyste mohli záznamy později obnovit nebo přenést na jiný účet.",
+    "set.export": "Stáhnout zálohu", "set.copy": "Zkopírovat jako text",
+    "set.copied": "Zkopírováno. Vložte text na bezpečné místo, například do Uložených zpráv v Telegramu.",
+    "set.copyFail": "Automatické kopírování se nezdařilo — označte text níže a zkopírujte ho ručně.",
+    "set.saved": "Soubor uložen.", "set.maybe": "Pokud se soubor neobjevil ve stažených, použijte „Zkopírovat jako text“.",
+    "set.saveFail": "Soubor zde nelze uložit. Použijte „Zkopírovat jako text“.",
+    "set.restore": "Obnovení", "set.import": "Import ze souboru", "set.paste": "Vložit text zálohy",
+    "set.pastePh": "Sem vložte text zálohy", "set.check": "Zkontrolovat",
+    "set.bad": "Tohle nevypadá jako záloha tréninkového deníku. Zkontrolujte soubor.",
+    "set.preview": "Záloha obsahuje {d} a {p}. Přidají se k současným záznamům; dny, které jsou v obou, se nahradí daty ze zálohy.",
+    "set.doImport": "Importovat", "set.imported": "Hotovo: importováno {d} a {p}."
+  };
+  PLURALS.cs = {
+    sets: { one: "série", few: "série", many: "série", other: "sérií" },
+    setsOf: { one: "série", few: "sérií", many: "série", other: "sérií" },
+    workouts: { one: "trénink", few: "tréninky", many: "tréninku", other: "tréninků" },
+    workoutsAcc: { one: "trénink", few: "tréninky", many: "tréninku", other: "tréninků" },
+    wdays: { one: "tréninkový den", few: "tréninkové dny", many: "tréninkového dne", other: "tréninkových dnů" }
+  };
+  DOW_SHORT.cs = ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"];
+  DEFAULT_EX.cs = ["Dřep", "Bench press", "Mrtvý tah", "Shyby", "Tlak nad hlavu", "Přítahy v předklonu"];
 
   // ---------- language ----------
   function detectLang() {
@@ -912,6 +1009,7 @@ body.timing .app { padding-bottom: 160px; }
     if (!code) code = (navigator.language || "ru");
     code = code.toLowerCase().slice(0, 2);
     if (code === "uk") return "uk";
+    if (code === "cs" || code === "sk") return "cs";
     if (code === "ru" || code === "be" || code === "kk") return "ru";
     return code === "en" ? "en" : "ru";
   }
@@ -2466,7 +2564,7 @@ body.timing .app { padding-bottom: 160px; }
     var c2 = el("div", "setcard");
     c2.appendChild(el("h3", null, t("set.lang")));
     var langs = el("div", "quick");
-    ["ru", "uk", "en"].forEach(function (l) {
+    ["ru", "uk", "en", "cs"].forEach(function (l) {
       var b = btn(null, LANG_NAMES[l], function () {
         lsSet("wl-lang", l);
         setLang(l);
