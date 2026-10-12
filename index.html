@@ -337,67 +337,122 @@ body.timing .app { padding-bottom: 160px; }
   background: var(--ink); color: var(--bg); border-radius: 12px; padding: 10px 14px; font-size: 14px;
 }
 .toast button { border: 0; background: none; color: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; padding: 4px 0; }
+
+/* Header with settings button */
+.top { flex-wrap: nowrap; align-items: flex-start; }
+.top .ttl { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.gear {
+  width: 44px; height: 44px; flex: none; padding: 0; border-radius: 12px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--muted);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.gear svg { width: 22px; height: 22px; display: block; }
+.gear[aria-expanded="true"] { color: var(--accent); border-color: var(--accent); }
+.tabs.off button[aria-selected] { background: none; color: var(--muted); }
+
+/* Settings */
+.sethead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.setcard {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+  padding: 16px; display: flex; flex-direction: column; gap: 12px;
+}
+.setcard h3 {
+  margin: 0; font-family: var(--display); font-weight: 500; font-size: 15px;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+}
+.setcard .sw { align-items: flex-start; line-height: 1.35; }
+.setcard .sw { font-size: 15px; gap: 12px; }
+.setcard .sw input[type="checkbox"] { flex: none; width: 22px; height: 22px; margin: 0; accent-color: var(--accent); }
+.note { font-size: 14px; color: var(--muted); }
+.okmsg { font-size: 14px; color: var(--accent); }
+.backup-text {
+  width: 100%; min-height: 120px; resize: vertical; padding: 10px 12px;
+  border-radius: 12px; border: 1px solid var(--line); background: var(--field); color: var(--ink);
+  font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.setcard .actions .primary { height: 48px; }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Calendar: selected day */
+.calday {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+  padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;
+}
+.calday .cd-title { font-family: var(--display); font-weight: 500; font-size: 18px; }
+.calday .cd-title small { font-family: var(--body); font-weight: 400; font-size: 13px; color: var(--muted); margin-left: 8px; }
+.calday .cd-plan { font-weight: 600; font-size: 16px; overflow-wrap: anywhere; }
+.calday .hrow { grid-template-columns: minmax(0, 40%) minmax(0, 1fr); }
+.calday .hrow .d { color: var(--ink); font-weight: 500; overflow-wrap: anywhere; }
+.past.sel { border-color: var(--accent); }
 </style>
 
 <div class="app">
   <header class="top">
-    <h1>Журнал тренировок</h1>
-    <div class="status" id="status" aria-live="polite"></div>
+    <div class="ttl">
+      <h1 data-i="app.title">Журнал тренировок</h1>
+      <div class="status" id="status" aria-live="polite"></div>
+    </div>
+    <button type="button" class="gear" id="gear" aria-expanded="false" data-ia="set.title" aria-label="Настройки">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+    </button>
   </header>
 
-  <nav class="tabs" role="tablist" aria-label="Разделы">
-    <button type="button" role="tab" data-tab="log" id="tabbtn-log">Журнал</button>
-    <button type="button" role="tab" data-tab="plan" id="tabbtn-plan">Моя тренировка</button>
-    <button type="button" role="tab" data-tab="cal" id="tabbtn-cal">Календарь</button>
+  <nav class="tabs" id="tabs" role="tablist" data-ia="nav.tabs" aria-label="Разделы">
+    <button type="button" role="tab" data-tab="log" id="tabbtn-log" data-i="tab.log">Журнал</button>
+    <button type="button" role="tab" data-tab="plan" id="tabbtn-plan" data-i="tab.plan">Моя тренировка</button>
+    <button type="button" role="tab" data-tab="cal" id="tabbtn-cal" data-i="tab.cal">Календарь</button>
   </nav>
 
   <div class="datebar" id="datebar">
-    <button class="nav" id="prev" type="button" aria-label="Предыдущий день">‹</button>
+    <button class="nav" id="prev" type="button" data-ia="date.prev" aria-label="Предыдущий день">‹</button>
     <div class="when">
       <div class="day" id="dayTitle"></div>
       <div class="sub" id="daySub"></div>
     </div>
-    <button class="nav" id="next" type="button" aria-label="Следующий день">›</button>
+    <button class="nav" id="next" type="button" data-ia="date.next" aria-label="Следующий день">›</button>
   </div>
 
   <div class="panel" id="tab-log">
   <form class="entry" id="form" novalidate autocomplete="off">
     <div>
-      <label for="exName">Упражнение</label>
-      <input class="text" id="exName" type="text" placeholder="Например, жим лёжа" maxlength="60" enterkeyhint="next">
-      <div class="err" id="nameErr" hidden>Введите название упражнения.</div>
+      <label for="exName" data-i="log.exercise">Упражнение</label>
+      <input class="text" id="exName" type="text" data-ip="log.exPh" placeholder="Например, жим лёжа" maxlength="60" enterkeyhint="next">
+      <div class="err" id="nameErr" hidden data-i="log.nameErr">Введите название упражнения.</div>
       <div class="hint" id="lastHint" hidden></div>
     </div>
-    <div class="quick" id="quick" aria-label="Быстрый выбор упражнения"></div>
+    <div class="quick" id="quick" data-ia="log.quickAria" aria-label="Быстрый выбор упражнения"></div>
     <div class="nums">
       <div>
-        <label for="weight">Вес, кг</label>
+        <label for="weight" data-i="f.w">Вес, кг</label>
         <div class="stepper" id="wBox">
-          <button type="button" data-step="weight" data-by="-2.5" aria-label="Минус 2,5 кг">−</button>
+          <button type="button" data-step="weight" data-by="-2.5" data-ia="log.wMinus" aria-label="Минус 2,5 кг">−</button>
           <input id="weight" type="text" inputmode="decimal" value="20" aria-describedby="wNote">
-          <button type="button" data-step="weight" data-by="2.5" aria-label="Плюс 2,5 кг">+</button>
+          <button type="button" data-step="weight" data-by="2.5" data-ia="log.wPlus" aria-label="Плюс 2,5 кг">+</button>
         </div>
-        <div class="hint" id="wNote">0 — свой вес</div>
+        <div class="hint" id="wNote" data-i="log.bw">0 — свой вес</div>
       </div>
       <div>
-        <label for="reps">Повторения</label>
+        <label for="reps" data-i="f.reps">Повторения</label>
         <div class="stepper" id="rBox">
-          <button type="button" data-step="reps" data-by="-1" aria-label="Минус одно повторение">−</button>
+          <button type="button" data-step="reps" data-by="-1" data-ia="log.rMinus" aria-label="Минус одно повторение">−</button>
           <input id="reps" type="text" inputmode="numeric" value="10">
-          <button type="button" data-step="reps" data-by="1" aria-label="Плюс одно повторение">+</button>
+          <button type="button" data-step="reps" data-by="1" data-ia="log.rPlus" aria-label="Плюс одно повторение">+</button>
         </div>
       </div>
     </div>
     <div class="rest">
-      <label class="sw" for="restOn"><input type="checkbox" id="restOn"> Таймер отдыха после подхода</label>
-      <div class="quick" id="restOpts" hidden aria-label="Длительность отдыха"></div>
+      <label class="sw" for="restOn"><input type="checkbox" id="restOn"> <span data-i="log.restOn">Таймер отдыха после подхода</span></label>
+      <div class="quick" id="restOpts" hidden data-ia="log.restAria" aria-label="Длительность отдыха"></div>
     </div>
-    <button class="primary" type="submit">Добавить подход</button>
+    <button class="primary" type="submit" data-i="log.add">Добавить подход</button>
   </form>
 
   <section>
     <div class="sechead">
-      <h2 id="dayHead">Сегодня</h2>
+      <h2 id="dayHead"></h2>
       <div class="totals" id="totals"></div>
     </div>
     <div class="list" id="dayList"></div>
@@ -411,11 +466,11 @@ body.timing .app { padding-bottom: 160px; }
   <div class="panel" id="tab-cal" hidden>
   <section>
     <div class="sechead">
-      <h2>Календарь</h2>
+      <h2 data-i="tab.cal">Календарь</h2>
       <div class="calnav">
-        <button type="button" id="calPrev" aria-label="Предыдущий месяц">‹</button>
+        <button type="button" id="calPrev" data-ia="cal.prev" aria-label="Предыдущий месяц">‹</button>
         <span id="calTitle"></span>
-        <button type="button" id="calNext" aria-label="Следующий месяц">›</button>
+        <button type="button" id="calNext" data-ia="cal.next" aria-label="Следующий месяц">›</button>
       </div>
     </div>
     <div class="cal" id="cal"></div>
@@ -423,30 +478,33 @@ body.timing .app { padding-bottom: 160px; }
   </section>
 
   <section id="histSec">
-    <div class="sechead"><h2>Прошлые тренировки</h2></div>
+    <div class="sechead"><h2 data-i="hist.title">Прошлые тренировки</h2></div>
     <div class="list" id="histList"></div>
   </section>
+  </div>
+
+  <div class="panel" id="tab-set" hidden>
+    <div class="planbox" id="setView"></div>
   </div>
 </div>
 
 <div class="timer" id="timer" hidden role="timer" aria-live="off">
   <div class="tfill" id="tFill"></div>
-  <div class="tlabel" id="tLabel">Отдых</div>
+  <div class="tlabel" id="tLabel"></div>
   <div class="ttime" id="tTime"></div>
-  <button type="button" id="tPlus">+30 с</button>
-  <button type="button" id="tStop">Пропустить</button>
+  <button type="button" id="tPlus" data-i="rest.plus">+30 с</button>
+  <button type="button" id="tStop"></button>
 </div>
 
 <div class="toast" id="toast" hidden role="status">
   <span id="toastText"></span>
-  <button type="button" id="undo">Вернуть</button>
+  <button type="button" id="undo" data-i="undo">Вернуть</button>
 </div>
 
 <script>
 (function () {
   "use strict";
 
-  var DEFAULTS = ["Приседания", "Жим лёжа", "Становая тяга", "Подтягивания", "Жим стоя", "Тяга в наклоне"];
   var HIST_PAGE = 20;
 
   // ---------- helpers ----------
@@ -457,63 +515,389 @@ body.timing .app { padding-bottom: 160px; }
     if (text != null) n.textContent = text;
     return n;
   }
+  function btn(cls, text, fn) {
+    var b = el("button", cls, text);
+    b.type = "button";
+    b.addEventListener("click", fn);
+    return b;
+  }
+  function txt(s) { return document.createTextNode(s); }
   function pad(n) { return (n < 10 ? "0" : "") + n; }
   function iso(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
   function toDate(s) { var p = s.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
   function shift(s, by) { var d = toDate(s); d.setDate(d.getDate() + by); return iso(d); }
   function today() { return iso(new Date()); }
-  function fmt(s, opts) { return new Intl.DateTimeFormat("ru-RU", opts).format(toDate(s)); }
-  function num(n) { return new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 }).format(n); }
   function parseNum(v) {
     var n = parseFloat(String(v).replace(",", ".").replace(/\s/g, ""));
     return isFinite(n) ? n : NaN;
   }
-  function plural(n, one, few, many) {
-    var a = Math.abs(n) % 100, b = a % 10;
-    if (a > 10 && a < 20) return many;
-    if (b === 1) return one;
-    if (b >= 2 && b <= 4) return few;
-    return many;
-  }
-  function same(a, b) { return a.trim().toLowerCase() === b.trim().toLowerCase(); }
-  function setText(s) { return s.w > 0 ? num(s.w) + " × " + s.r : "× " + s.r; }
+  function norm(a) { return String(a).trim().toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " "); }
+  function same(a, b) { return norm(a) === norm(b); }
   function lsGet(k, fallback) {
     try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; }
   }
   function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+  // ---------- translations ----------
+  var LOCALES = { ru: "ru-RU", uk: "uk-UA", en: "en-GB" };
+  var LANG_NAMES = { ru: "Русский", uk: "Українська", en: "English" };
+  var I18N = {
+    ru: {
+      "app.title": "Журнал тренировок",
+      "tab.log": "Журнал", "tab.plan": "Моя тренировка", "tab.cal": "Календарь", "nav.tabs": "Разделы",
+      "date.prev": "Предыдущий день", "date.next": "Следующий день", "date.today": "Сегодня", "date.toToday": "к сегодня",
+      "log.exercise": "Упражнение", "log.exPh": "Например, жим лёжа", "log.nameErr": "Введите название упражнения.",
+      "log.quickAria": "Быстрый выбор упражнения", "log.wMinus": "Минус 2,5 кг", "log.wPlus": "Плюс 2,5 кг",
+      "log.bw": "0 — свой вес", "log.rMinus": "Минус одно повторение", "log.rPlus": "Плюс одно повторение",
+      "log.restOn": "Таймер отдыха после подхода", "log.restAria": "Длительность отдыха", "log.add": "Добавить подход",
+      "log.dayToday": "Сегодня", "log.dayOther": "Эта тренировка",
+      "log.emptyToday": "Пока ничего не записано. Выберите упражнение, укажите вес и повторения — и нажмите «Добавить подход».",
+      "log.emptyDay": "В этот день записей нет.",
+      "lastTime": "В прошлый раз, {d}: ",
+      "lifted.total": "всего поднято", "lifted.title": "Сумма по всем подходам: вес × повторения", "lifted.ex": "поднято",
+      "kg": "кг", "bodyweight": "свой вес",
+      "del.setAria": "Удалить подход {n}: {s}", "log.more": "+ ещё {s}", "log.moreAria": "Добавить ещё один такой же подход: {s}",
+      "del.ex": "Удалить упражнение", "del.exQ": "Удалить «{n}» и все его подходы?",
+      "del.day": "Удалить всю тренировку за этот день", "del.dayQ": "Удалить все записи за этот день?",
+      "del.yes": "Да, удалить", "cancel": "Отмена", "save": "Сохранить", "delete": "Удалить", "deleteSure": "Точно удалить?",
+      "hist.title": "Прошлые тренировки", "hist.more": "Показать ещё",
+      "cal.prev": "Предыдущий месяц", "cal.next": "Следующий месяц", "cal.hasAria": ", есть тренировка",
+      "cal.note": "Закрашены дни с тренировками. В этом месяце: {n}.", "cal.noneMonth": "В этом месяце тренировок нет.",
+      "cal.dayEmpty": "В этот день тренировки не было.", "cal.openLog": "Открыть в журнале",
+      "cal.openPlan": "Открыть в «Моей тренировке»", "cal.free": "Свободная тренировка",
+      "rest.label": "Отдых", "rest.done": "Отдых окончен — следующий подход", "rest.skip": "Пропустить", "rest.close": "Закрыть",
+      "rest.plus": "+30 с", "rest.none": "Без таймера", "u.sec": "{n} с", "u.min": "{n} мин",
+      "undo": "Вернуть", "toast.setDel": "Подход удалён: {s}",
+      "plan.empty": "Составьте свою тренировку: список упражнений с подходами, повторениями и весом. На занятии отмечайте выполненные подходы — они сами попадут в журнал.",
+      "plan.create": "Создать тренировку", "plan.new": "+ Новая", "plan.edit": "Изменить",
+      "plan.progPre": "{d} выполнено ", "plan.of": "{x} из {y}", "plan.progSuf": " {sets}", "plan.finished": " — тренировка завершена",
+      "plan.badgeDone": "✓ выполнено", "plan.restX": "отдых {x}", "plan.noTimer": "без таймера",
+      "plan.editLink": "изменить", "plan.progress": "прогресс", "plan.hideProgress": "скрыть прогресс",
+      "plan.weightToday": "Вес на эту тренировку", "plan.wDown": "Уменьшить вес на 2,5 кг, {n}", "plan.wUp": "Увеличить вес на 2,5 кг, {n}",
+      "plan.more": "+ ещё подход {s}", "plan.addEx": "+ Добавить упражнение",
+      "plan.hint": "Нажмите на кружок справа — подход отметится и запишется в журнал за выбранный день; для сегодняшнего дня включится таймер отдыха. Повторное нажатие на галочку снимает отметку.",
+      "plan.tickAria": "Отметить подход выполненным, {n}", "plan.untickAria": "Подход {k} выполнен. Снять отметку",
+      "plan.wAria": "Вес в килограммах, {n}", "plan.rAria": "Повторения, {n}", "unitKgX": "кг ×",
+      "ie.new": "Новое упражнение", "ie.edit": "Изменить упражнение", "ie.namePh": "Название упражнения",
+      "f.sets": "Подходы", "f.reps": "Повторения", "f.w": "Вес, кг", "f.rest": "Отдых после подхода",
+      "ed.new": "Новая тренировка", "ed.edit": "Изменить тренировку", "ed.name": "Название", "ed.namePh": "Например, день ног",
+      "ed.days": "День недели — можно выбрать несколько", "ed.exPh": "Упражнение {n}", "ed.exAria": "Название упражнения {n}",
+      "ed.rmAria": "Убрать упражнение {n}", "ed.errItems": "Добавьте хотя бы одно упражнение с названием.",
+      "ed.errDays": "Выберите день недели для этой тренировки.", "ed.defName": "Тренировка {n}",
+      "ph.none": "Истории пока нет — она появится после первого отмеченного подхода.",
+      "ph.bestW": "Лучший вес за тренировку: ", "ph.bestR": "Максимум повторений в подходе: ", "ph.repsUnit": "повт.",
+      "ph.over": "за {n} {w}", "ph.one": ". График появится после второй тренировки.",
+      "ph.chartAria": "График: {m} по тренировкам, {n}", "ph.mW": "лучший вес", "ph.mR": "максимум повторений",
+      "st.cloud": "Сохранено в облаке", "st.saving": "Сохраняю…", "st.local": "Хранится только в этом браузере",
+      "st.denied": "Облако недоступно — записи остаются в этом браузере",
+      "st.tg": "Сохранено в Telegram", "st.tgLocal": "Открыто вне Telegram — записи хранятся только на этом устройстве",
+      "st.tgDenied": "Не удалось сохранить в Telegram — записи остаются на этом устройстве",
+      "set.title": "Настройки", "set.back": "← Назад", "set.display": "Что показывать",
+      "set.showProgress": "Кнопка «прогресс» в «Моей тренировке»", "set.showTotals": "«Всего поднято» (вес × повторения)",
+      "set.lang": "Язык", "set.backup": "Резервная копия",
+      "set.backupNote": "Файл со всеми тренировками и планами. Сохраните его, чтобы потом восстановить записи или перенести их на другой аккаунт.",
+      "set.export": "Скачать резервную копию", "set.copy": "Скопировать как текст",
+      "set.copied": "Скопировано. Вставьте текст в надёжное место, например в «Избранное» в Telegram.",
+      "set.copyFail": "Не удалось скопировать автоматически — выделите текст ниже и скопируйте вручную.",
+      "set.saved": "Файл сохранён.", "set.maybe": "Если файл не появился в загрузках, используйте «Скопировать как текст».",
+      "set.saveFail": "Не удалось сохранить файл здесь. Используйте «Скопировать как текст».",
+      "set.restore": "Восстановление", "set.import": "Импорт из файла", "set.paste": "Вставить текст копии",
+      "set.pastePh": "Вставьте сюда текст резервной копии", "set.check": "Проверить",
+      "set.bad": "Это не похоже на резервную копию журнала. Проверьте файл.",
+      "set.preview": "В копии: {d} и {p}. Записи добавятся к текущим; дни, которые есть и там и там, заменятся данными из копии.",
+      "set.doImport": "Импортировать", "set.imported": "Готово: импортировано {d} и {p}."
+    },
+    uk: {
+      "app.title": "Журнал тренувань",
+      "tab.log": "Журнал", "tab.plan": "Моє тренування", "tab.cal": "Календар", "nav.tabs": "Розділи",
+      "date.prev": "Попередній день", "date.next": "Наступний день", "date.today": "Сьогодні", "date.toToday": "до сьогодні",
+      "log.exercise": "Вправа", "log.exPh": "Наприклад, жим лежачи", "log.nameErr": "Введіть назву вправи.",
+      "log.quickAria": "Швидкий вибір вправи", "log.wMinus": "Мінус 2,5 кг", "log.wPlus": "Плюс 2,5 кг",
+      "log.bw": "0 — власна вага", "log.rMinus": "Мінус одне повторення", "log.rPlus": "Плюс одне повторення",
+      "log.restOn": "Таймер відпочинку після підходу", "log.restAria": "Тривалість відпочинку", "log.add": "Додати підхід",
+      "log.dayToday": "Сьогодні", "log.dayOther": "Це тренування",
+      "log.emptyToday": "Поки нічого не записано. Оберіть вправу, вкажіть вагу та повторення — і натисніть «Додати підхід».",
+      "log.emptyDay": "Цього дня записів немає.",
+      "lastTime": "Минулого разу, {d}: ",
+      "lifted.total": "усього піднято", "lifted.title": "Сума за всіма підходами: вага × повторення", "lifted.ex": "піднято",
+      "kg": "кг", "bodyweight": "власна вага",
+      "del.setAria": "Видалити підхід {n}: {s}", "log.more": "+ ще {s}", "log.moreAria": "Додати ще один такий самий підхід: {s}",
+      "del.ex": "Видалити вправу", "del.exQ": "Видалити «{n}» і всі її підходи?",
+      "del.day": "Видалити все тренування за цей день", "del.dayQ": "Видалити всі записи за цей день?",
+      "del.yes": "Так, видалити", "cancel": "Скасувати", "save": "Зберегти", "delete": "Видалити", "deleteSure": "Точно видалити?",
+      "hist.title": "Минулі тренування", "hist.more": "Показати ще",
+      "cal.prev": "Попередній місяць", "cal.next": "Наступний місяць", "cal.hasAria": ", є тренування",
+      "cal.note": "Зафарбовані дні з тренуваннями. Цього місяця: {n}.", "cal.noneMonth": "Цього місяця тренувань немає.",
+      "cal.dayEmpty": "Цього дня тренування не було.", "cal.openLog": "Відкрити в журналі",
+      "cal.openPlan": "Відкрити в «Моєму тренуванні»", "cal.free": "Вільне тренування",
+      "rest.label": "Відпочинок", "rest.done": "Відпочинок завершено — наступний підхід", "rest.skip": "Пропустити", "rest.close": "Закрити",
+      "rest.plus": "+30 с", "rest.none": "Без таймера", "u.sec": "{n} с", "u.min": "{n} хв",
+      "undo": "Повернути", "toast.setDel": "Підхід видалено: {s}",
+      "plan.empty": "Складіть своє тренування: список вправ із підходами, повтореннями та вагою. На занятті відмічайте виконані підходи — вони самі потраплять у журнал.",
+      "plan.create": "Створити тренування", "plan.new": "+ Нове", "plan.edit": "Змінити",
+      "plan.progPre": "{d} виконано ", "plan.of": "{x} з {y}", "plan.progSuf": " {sets}", "plan.finished": " — тренування завершено",
+      "plan.badgeDone": "✓ виконано", "plan.restX": "відпочинок {x}", "plan.noTimer": "без таймера",
+      "plan.editLink": "змінити", "plan.progress": "прогрес", "plan.hideProgress": "сховати прогрес",
+      "plan.weightToday": "Вага на це тренування", "plan.wDown": "Зменшити вагу на 2,5 кг, {n}", "plan.wUp": "Збільшити вагу на 2,5 кг, {n}",
+      "plan.more": "+ ще підхід {s}", "plan.addEx": "+ Додати вправу",
+      "plan.hint": "Натисніть на кружечок праворуч — підхід відмітиться й запишеться в журнал за вибраний день; для сьогоднішнього дня ввімкнеться таймер відпочинку. Повторне натискання на галочку знімає відмітку.",
+      "plan.tickAria": "Відмітити підхід виконаним, {n}", "plan.untickAria": "Підхід {k} виконано. Зняти відмітку",
+      "plan.wAria": "Вага в кілограмах, {n}", "plan.rAria": "Повторення, {n}", "unitKgX": "кг ×",
+      "ie.new": "Нова вправа", "ie.edit": "Змінити вправу", "ie.namePh": "Назва вправи",
+      "f.sets": "Підходи", "f.reps": "Повторення", "f.w": "Вага, кг", "f.rest": "Відпочинок після підходу",
+      "ed.new": "Нове тренування", "ed.edit": "Змінити тренування", "ed.name": "Назва", "ed.namePh": "Наприклад, день ніг",
+      "ed.days": "День тижня — можна вибрати кілька", "ed.exPh": "Вправа {n}", "ed.exAria": "Назва вправи {n}",
+      "ed.rmAria": "Прибрати вправу {n}", "ed.errItems": "Додайте хоча б одну вправу з назвою.",
+      "ed.errDays": "Оберіть день тижня для цього тренування.", "ed.defName": "Тренування {n}",
+      "ph.none": "Історії поки немає — вона з’явиться після першого відміченого підходу.",
+      "ph.bestW": "Найкраща вага за тренування: ", "ph.bestR": "Максимум повторень у підході: ", "ph.repsUnit": "повт.",
+      "ph.over": "за {n} {w}", "ph.one": ". Графік з’явиться після другого тренування.",
+      "ph.chartAria": "Графік: {m} за тренуваннями, {n}", "ph.mW": "найкраща вага", "ph.mR": "максимум повторень",
+      "st.cloud": "Збережено в хмарі", "st.saving": "Зберігаю…", "st.local": "Зберігається лише в цьому браузері",
+      "st.denied": "Хмара недоступна — записи залишаються в цьому браузері",
+      "st.tg": "Збережено в Telegram", "st.tgLocal": "Відкрито поза Telegram — записи зберігаються лише на цьому пристрої",
+      "st.tgDenied": "Не вдалося зберегти в Telegram — записи залишаються на цьому пристрої",
+      "set.title": "Налаштування", "set.back": "← Назад", "set.display": "Що показувати",
+      "set.showProgress": "Кнопка «прогрес» у «Моєму тренуванні»", "set.showTotals": "«Усього піднято» (вага × повторення)",
+      "set.lang": "Мова", "set.backup": "Резервна копія",
+      "set.backupNote": "Файл з усіма тренуваннями та планами. Збережіть його, щоб потім відновити записи або перенести їх на інший акаунт.",
+      "set.export": "Завантажити резервну копію", "set.copy": "Скопіювати як текст",
+      "set.copied": "Скопійовано. Вставте текст у надійне місце, наприклад у «Збережене» в Telegram.",
+      "set.copyFail": "Не вдалося скопіювати автоматично — виділіть текст нижче й скопіюйте вручну.",
+      "set.saved": "Файл збережено.", "set.maybe": "Якщо файл не з’явився в завантаженнях, скористайтеся «Скопіювати як текст».",
+      "set.saveFail": "Не вдалося зберегти файл тут. Скористайтеся «Скопіювати як текст».",
+      "set.restore": "Відновлення", "set.import": "Імпорт із файлу", "set.paste": "Вставити текст копії",
+      "set.pastePh": "Вставте сюди текст резервної копії", "set.check": "Перевірити",
+      "set.bad": "Це не схоже на резервну копію журналу. Перевірте файл.",
+      "set.preview": "У копії: {d} і {p}. Записи додадуться до поточних; дні, які є і там і там, заміняться даними з копії.",
+      "set.doImport": "Імпортувати", "set.imported": "Готово: імпортовано {d} і {p}."
+    },
+    en: {
+      "app.title": "Workout Log",
+      "tab.log": "Log", "tab.plan": "My workout", "tab.cal": "Calendar", "nav.tabs": "Sections",
+      "date.prev": "Previous day", "date.next": "Next day", "date.today": "Today", "date.toToday": "back to today",
+      "log.exercise": "Exercise", "log.exPh": "e.g. Bench press", "log.nameErr": "Enter an exercise name.",
+      "log.quickAria": "Quick exercise pick", "log.wMinus": "Minus 2.5 kg", "log.wPlus": "Plus 2.5 kg",
+      "log.bw": "0 = bodyweight", "log.rMinus": "One rep less", "log.rPlus": "One rep more",
+      "log.restOn": "Rest timer after each set", "log.restAria": "Rest length", "log.add": "Add set",
+      "log.dayToday": "Today", "log.dayOther": "This workout",
+      "log.emptyToday": "Nothing logged yet. Pick an exercise, set the weight and reps, then tap “Add set”.",
+      "log.emptyDay": "Nothing logged on this day.",
+      "lastTime": "Last time, {d}: ",
+      "lifted.total": "total lifted", "lifted.title": "Sum of weight × reps over all sets", "lifted.ex": "lifted",
+      "kg": "kg", "bodyweight": "bodyweight",
+      "del.setAria": "Delete set {n}: {s}", "log.more": "+ another {s}", "log.moreAria": "Add the same set again: {s}",
+      "del.ex": "Delete exercise", "del.exQ": "Delete “{n}” and all its sets?",
+      "del.day": "Delete this day’s whole workout", "del.dayQ": "Delete everything logged on this day?",
+      "del.yes": "Yes, delete", "cancel": "Cancel", "save": "Save", "delete": "Delete", "deleteSure": "Delete for sure?",
+      "hist.title": "Past workouts", "hist.more": "Show more",
+      "cal.prev": "Previous month", "cal.next": "Next month", "cal.hasAria": ", workout logged",
+      "cal.note": "Shaded days have workouts. This month: {n}.", "cal.noneMonth": "No workouts this month.",
+      "cal.dayEmpty": "No workout on this day.", "cal.openLog": "Open in Log",
+      "cal.openPlan": "Open in My workout", "cal.free": "Free workout",
+      "rest.label": "Rest", "rest.done": "Rest over — next set", "rest.skip": "Skip", "rest.close": "Close",
+      "rest.plus": "+30 s", "rest.none": "No timer", "u.sec": "{n} s", "u.min": "{n} min",
+      "undo": "Undo", "toast.setDel": "Set deleted: {s}",
+      "plan.empty": "Build your workout: a list of exercises with sets, reps and weight. During the session, tick off sets as you finish them — they go straight into the log.",
+      "plan.create": "Create workout", "plan.new": "+ New", "plan.edit": "Edit",
+      "plan.progPre": "{d}: ", "plan.of": "{x} of {y}", "plan.progSuf": " {sets} done", "plan.finished": " — workout complete",
+      "plan.badgeDone": "✓ done", "plan.restX": "rest {x}", "plan.noTimer": "no timer",
+      "plan.editLink": "edit", "plan.progress": "progress", "plan.hideProgress": "hide progress",
+      "plan.weightToday": "Weight for this workout", "plan.wDown": "Lower weight by 2.5 kg, {n}", "plan.wUp": "Raise weight by 2.5 kg, {n}",
+      "plan.more": "+ one more set {s}", "plan.addEx": "+ Add exercise",
+      "plan.hint": "Tap the circle on the right to tick a set — it’s saved to the log for the selected day, and for today the rest timer starts. Tap the tick again to undo it.",
+      "plan.tickAria": "Mark set done, {n}", "plan.untickAria": "Set {k} done. Untick",
+      "plan.wAria": "Weight in kg, {n}", "plan.rAria": "Reps, {n}", "unitKgX": "kg ×",
+      "ie.new": "New exercise", "ie.edit": "Edit exercise", "ie.namePh": "Exercise name",
+      "f.sets": "Sets", "f.reps": "Reps", "f.w": "Weight, kg", "f.rest": "Rest after each set",
+      "ed.new": "New workout", "ed.edit": "Edit workout", "ed.name": "Name", "ed.namePh": "e.g. Leg day",
+      "ed.days": "Day of the week — pick one or more", "ed.exPh": "Exercise {n}", "ed.exAria": "Exercise name {n}",
+      "ed.rmAria": "Remove exercise {n}", "ed.errItems": "Add at least one exercise with a name.",
+      "ed.errDays": "Pick a day of the week for this workout.", "ed.defName": "Workout {n}",
+      "ph.none": "No history yet — it appears after your first ticked set.",
+      "ph.bestW": "Best weight per workout: ", "ph.bestR": "Most reps in a set: ", "ph.repsUnit": "reps",
+      "ph.over": "over {n} {w}", "ph.one": ". The chart appears after your second workout.",
+      "ph.chartAria": "Chart: {m} per workout, {n}", "ph.mW": "best weight", "ph.mR": "most reps",
+      "st.cloud": "Saved to the cloud", "st.saving": "Saving…", "st.local": "Stored in this browser only",
+      "st.denied": "Cloud unavailable — entries stay in this browser",
+      "st.tg": "Saved to Telegram", "st.tgLocal": "Opened outside Telegram — entries stay on this device",
+      "st.tgDenied": "Couldn’t save to Telegram — entries stay on this device",
+      "set.title": "Settings", "set.back": "← Back", "set.display": "Display",
+      "set.showProgress": "“Progress” link in My workout", "set.showTotals": "“Total lifted” (weight × reps)",
+      "set.lang": "Language", "set.backup": "Backup",
+      "set.backupNote": "A file with all your workouts and plans. Keep it to restore your entries later or move them to another account.",
+      "set.export": "Download backup", "set.copy": "Copy as text",
+      "set.copied": "Copied. Paste it somewhere safe, for example Saved Messages in Telegram.",
+      "set.copyFail": "Couldn’t copy automatically — select the text below and copy it manually.",
+      "set.saved": "File saved.", "set.maybe": "If the file didn’t appear in your downloads, use “Copy as text”.",
+      "set.saveFail": "Couldn’t save a file here. Use “Copy as text” instead.",
+      "set.restore": "Restore", "set.import": "Import from file", "set.paste": "Paste backup text",
+      "set.pastePh": "Paste the backup text here", "set.check": "Check",
+      "set.bad": "This doesn’t look like a Workout Log backup. Check the file.",
+      "set.preview": "The backup has {d} and {p}. They’ll be added to your current entries; days present in both will be replaced by the backup.",
+      "set.doImport": "Import", "set.imported": "Done: imported {d} and {p}."
+    }
+  };
+  // Plural forms: Intl.PluralRules categories (one / few / many / other).
+  var PLURALS = {
+    ru: {
+      sets: { one: "подход", few: "подхода", many: "подходов", other: "подхода" },
+      setsOf: { one: "подхода", few: "подходов", many: "подходов", other: "подходов" },
+      workouts: { one: "тренировка", few: "тренировки", many: "тренировок", other: "тренировки" },
+      workoutsAcc: { one: "тренировку", few: "тренировки", many: "тренировок", other: "тренировки" },
+      wdays: { one: "тренировочный день", few: "тренировочных дня", many: "тренировочных дней", other: "тренировочного дня" }
+    },
+    uk: {
+      sets: { one: "підхід", few: "підходи", many: "підходів", other: "підходу" },
+      setsOf: { one: "підходу", few: "підходів", many: "підходів", other: "підходів" },
+      workouts: { one: "тренування", few: "тренування", many: "тренувань", other: "тренування" },
+      workoutsAcc: { one: "тренування", few: "тренування", many: "тренувань", other: "тренування" },
+      wdays: { one: "тренувальний день", few: "тренувальні дні", many: "тренувальних днів", other: "тренувального дня" }
+    },
+    en: {
+      sets: { one: "set", other: "sets" }, setsOf: { one: "set", other: "sets" },
+      workouts: { one: "workout", other: "workouts" }, workoutsAcc: { one: "workout", other: "workouts" },
+      wdays: { one: "workout day", other: "workout days" }
+    }
+  };
+  var DOW_SHORT = {
+    ru: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
+    uk: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"],
+    en: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+  };
+  var DEFAULT_EX = {
+    ru: ["Приседания", "Жим лёжа", "Становая тяга", "Подтягивания", "Жим стоя", "Тяга в наклоне"],
+    uk: ["Присідання", "Жим лежачи", "Станова тяга", "Підтягування", "Жим стоячи", "Тяга в нахилі"],
+    en: ["Squat", "Bench press", "Deadlift", "Pull-ups", "Overhead press", "Bent-over row"]
+  };
+
+  // ---------- language ----------
+  function detectLang() {
+    var saved = lsGet("wl-lang", null);
+    if (saved && I18N[saved]) return saved;
+    var code = "";
+    try { code = window.Telegram.WebApp.initDataUnsafe.user.language_code || ""; } catch (e) {}
+    if (!code) code = (navigator.language || "ru");
+    code = code.toLowerCase().slice(0, 2);
+    if (code === "uk") return "uk";
+    if (code === "ru" || code === "be" || code === "kk") return "ru";
+    return code === "en" ? "en" : "ru";
+  }
+  var lang = detectLang();
+  var pluralRules = null;
+  function t(key, vars) {
+    var s = (I18N[lang] && I18N[lang][key]) || I18N.ru[key] || key;
+    if (vars) Object.keys(vars).forEach(function (k) { s = s.split("{" + k + "}").join(vars[k]); });
+    return s;
+  }
+  function tp(key, n) {
+    var forms = PLURALS[lang][key];
+    var cat = pluralRules ? pluralRules.select(n) : "other";
+    if (Math.floor(n) !== n && forms.other) cat = "other";
+    return forms[cat] || forms.many || forms.other;
+  }
+  function count(n, key) { return num(n) + " " + tp(key, n); }
+  function fmt(s, opts) { return new Intl.DateTimeFormat(LOCALES[lang], opts).format(toDate(s)); }
+  function num(n) { return new Intl.NumberFormat(LOCALES[lang], { maximumFractionDigits: 2 }).format(n); }
+  function dec(n) { return lang === "en" ? String(n) : String(n).replace(".", ","); }
+  function dow() { return DOW_SHORT[lang]; }
+  function dowFull(d) { return new Intl.DateTimeFormat(LOCALES[lang], { weekday: "long" }).format(new Date(2024, 0, 1 + d)); }
+  function setText(s) { return s.w > 0 ? num(s.w) + " × " + s.r : "× " + s.r; }
+  function kgText(w, r) { return w > 0 ? num(w) + " " + t("kg") + " × " + r : "× " + r; }
+  function clock(sec) { return Math.floor(sec / 60) + ":" + pad(sec % 60); }
+  function restLabel(sec) {
+    if (!sec) return t("rest.none");
+    if (sec < 60) return t("u.sec", { n: sec });
+    if (sec % 60 === 0) return t("u.min", { n: sec / 60 });
+    return clock(sec);
+  }
+  function setLang(l) {
+    lang = I18N[l] ? l : "ru";
+    try { pluralRules = new Intl.PluralRules(LOCALES[lang]); } catch (e) { pluralRules = null; }
+    document.documentElement.lang = lang;
+    document.querySelectorAll("[data-i]").forEach(function (n) { n.textContent = t(n.getAttribute("data-i")); });
+    document.querySelectorAll("[data-ia]").forEach(function (n) { n.setAttribute("aria-label", t(n.getAttribute("data-ia"))); });
+    document.querySelectorAll("[data-ip]").forEach(function (n) { n.setAttribute("placeholder", t(n.getAttribute("data-ip"))); });
+  }
+
+  // ---------- data cleaning (cloud reads and backup imports) ----------
+  var DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+  function cleanSets(sets) {
+    if (!Array.isArray(sets)) return [];
+    return sets.map(function (s) {
+      var w = +(s && s.w), r = Math.round(+(s && s.r));
+      if (!(w >= 0) || w > 1000 || !(r >= 1) || r > 1000) return null;
+      return { w: Math.round(w * 100) / 100, r: r };
+    }).filter(Boolean);
+  }
+  function cleanDay(date, raw) {
+    if (!DATE_RE.test(date) || !raw) return null;
+    var list = Array.isArray(raw) ? raw : raw.exercises;
+    if (!Array.isArray(list)) return null;
+    var ex = list.map(function (e) {
+      if (!e || typeof e.name !== "string" || !e.name.trim()) return null;
+      var sets = cleanSets(e.sets);
+      return sets.length ? { name: e.name.trim().slice(0, 60), sets: sets } : null;
+    }).filter(Boolean);
+    if (!ex.length) return null;
+    var d = { date: date, exercises: ex };
+    var p = !Array.isArray(raw) && raw.plan;
+    if (p && typeof p.id === "string" && typeof p.name === "string") d.plan = { id: p.id.slice(0, 40), name: p.name.slice(0, 40) };
+    return d;
+  }
+  function cleanPlan(p) {
+    if (!p || typeof p.name !== "string" || !Array.isArray(p.items)) return null;
+    var items = p.items.map(function (it) {
+      if (!it || typeof it.name !== "string" || !it.name.trim()) return null;
+      var sets = Math.round(+it.sets), reps = Math.round(+it.reps), w = +it.w, rest = it.rest == null ? 90 : Math.round(+it.rest);
+      return {
+        name: it.name.trim().slice(0, 60),
+        sets: sets >= 1 && sets <= 20 ? sets : 3,
+        reps: reps >= 1 && reps <= 1000 ? reps : 10,
+        w: w >= 0 && w <= 1000 ? Math.round(w * 100) / 100 : 0,
+        rest: rest >= 0 && rest <= 900 ? rest : 90
+      };
+    }).filter(Boolean);
+    var days = Array.isArray(p.days) ? p.days.filter(function (d) { return d === Math.round(d) && d >= 0 && d <= 6; }) : [];
+    return {
+      id: typeof p.id === "string" && /^[A-Za-z0-9_-]{1,40}$/.test(p.id) ? p.id : newId(),
+      name: p.name.trim().slice(0, 40) || "—",
+      days: days.filter(function (d, i) { return days.indexOf(d) === i; }).sort(),
+      items: items
+    };
+  }
 
   // ---------- state ----------
-  var days = lsGet("wl-days", {}) || {};      // date -> { date, exercises: [{ name, sets: [{w, r}] }] }
-  var dirty = {};                              // dates changed here and not yet confirmed by the cloud
+  var days = {};
+  (function () {
+    var raw = lsGet("wl-days", {}) || {};
+    Object.keys(raw).forEach(function (k) { var d = cleanDay(k, raw[k]); if (d) days[k] = d; });
+  })();
+  var plans = (lsGet("wl-plans", []) || []);
+  plans = Array.isArray(plans) ? plans.map(cleanPlan).filter(Boolean) : [];
+  var dirty = {};                              // keys changed here and not yet confirmed by the cloud
   (lsGet("wl-dirty", []) || []).forEach(function (d) { dirty[d] = true; });
+  var prefs = lsGet("wl-prefs", null) || {};
+  prefs = { progress: prefs.progress !== false, totals: prefs.totals !== false };
   var cur = today();
   var histShown = HIST_PAGE;
-  var justAdded = null;                        // { name, index } to animate once
+  var justAdded = null;
   var undoState = null, undoTimer = null;
 
-  var col = null;                              // cloud collection, when available
+  var col = null;                              // cloud handle, when available
   var cloud = "wait";                          // wait | on | off | denied
-  var saving = {}, again = {}, busy = 0;
+  var saving = {}, again = {}, busy = 0, active = 0, waiting = [];
 
   function persistLocal() {
     lsSet("wl-days", days);
     lsSet("wl-plans", plans);
     lsSet("wl-dirty", Object.keys(dirty));
   }
-  var plans = lsGet("wl-plans", []);          // [{ id, name, items: [{ name, sets, reps, w }] }]
-  if (!Array.isArray(plans)) plans = [];
   function day(date) { return days[date] || { date: date, exercises: [] }; }
 
-  // ---------- saving ----------
-  function touch(date) {
-    var d = days[date];
-    if (d && !d.exercises.length) delete days[date];
-    dirty[date] = true;
-    persistLocal();
-    flush(date);
-    renderStatus();
-  }
-  // Telegram CloudStorage: one key per day ("d_2026-10-10") and one per plan ("p_<id>"), values up to 4096 chars.
+  // ==STORAGE-BEGIN== (Telegram Mini App: Telegram CloudStorage, one key per day "d_YYYY-MM-DD" and per plan "p_<id>")
+  var ST = { on: "st.tg", off: "st.tgLocal", denied: "st.tgDenied" };
   var CS = null, planKeys = [], tg = null;
   function csCall(method, args) {
     return new Promise(function (res, rej) {
@@ -540,35 +924,12 @@ body.timing .app { padding-bottom: 160px; }
     }
     var d = days[key];
     if (d && d.exercises.length) {
-      var val = JSON.stringify(d.exercises);
+      // Days logged from My workout also remember which workout they belong to; older days stay a plain list.
+      var val = JSON.stringify(d.plan ? { e: d.exercises, p: d.plan } : d.exercises);
       if (val.length > 4096) return Promise.reject({ code: "quota_exceeded" });
       return csCall("setItem", ["d_" + key, val]);
     }
     return csCall("removeItem", ["d_" + key]);
-  }
-  function flush(date) {
-    if (!col || cloud !== "on") return;
-    if (saving[date]) { again[date] = true; return; }
-    saving[date] = true; busy++; renderStatus();
-    (async function () {
-      try {
-        do {
-          again[date] = false;
-          try { await writeOnce(date); }
-          catch (e) {
-            if (e && (e.code === "invalid_argument" || e.code === "quota_exceeded" || e.code === "revoked" || e.code === "not_granted")) throw e;
-            await new Promise(function (r) { setTimeout(r, 1200 + Math.random() * 800); });
-            await writeOnce(date);
-          }
-        } while (again[date]);
-        delete dirty[date];
-        persistLocal();
-      } catch (e) {
-        cloud = "denied";
-      } finally {
-        saving[date] = false; busy--; renderStatus();
-      }
-    })();
   }
   function applyTheme() {
     if (tg && tg.colorScheme) document.documentElement.setAttribute("data-theme", tg.colorScheme === "dark" ? "dark" : "light");
@@ -601,8 +962,10 @@ body.timing .app { padding-bottom: 160px; }
       var next = {};
       dayKeys.forEach(function (k) {
         try {
-          var ex = JSON.parse(vals[k]);
-          if (Array.isArray(ex) && ex.length) next[k.slice(2)] = { date: k.slice(2), exercises: ex };
+          var raw = JSON.parse(vals[k]);
+          if (raw && !Array.isArray(raw) && Array.isArray(raw.e)) raw = { exercises: raw.e, plan: raw.p };
+          var d = cleanDay(k.slice(2), raw);
+          if (d) next[d.date] = d;
         } catch (e) {}
       });
       Object.keys(dirty).forEach(function (date) {
@@ -612,11 +975,12 @@ body.timing .app { padding-bottom: 160px; }
       days = next;
       if (!dirty.plans) {
         plans = planKeys.slice().sort().map(function (k) {
-          try { var p = JSON.parse(vals[k]); return p && Array.isArray(p.items) ? p : null; } catch (e) { return null; }
+          try { return cleanPlan(JSON.parse(vals[k])); } catch (e) { return null; }
         }).filter(Boolean);
       }
       persistLocal();
       cloud = "on";
+      pickedFor = null;
       renderData();
       renderStatus();
       Object.keys(dirty).forEach(flush);
@@ -625,12 +989,63 @@ body.timing .app { padding-bottom: 160px; }
       renderStatus();
     }
   }
+  function saveFile(name, text) {
+    return new Promise(function (res, rej) {
+      try {
+        var url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+        var a = document.createElement("a");
+        a.href = url; a.download = name;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+        res("maybe");
+      } catch (e) { rej({ code: "unavailable" }); }
+    });
+  }
+  // ==STORAGE-END==
+
+  // ---------- saving ----------
+  function touch(date) {
+    var d = days[date];
+    if (d && !d.exercises.length) delete days[date];
+    dirty[date] = true;
+    persistLocal();
+    flush(date);
+    renderStatus();
+  }
+  function savePlans() { dirty.plans = true; persistLocal(); flush("plans"); renderStatus(); }
+  function flush(key) {
+    if (!col || cloud !== "on") return;
+    if (saving[key]) { again[key] = true; return; }
+    if (active >= 4) { if (waiting.indexOf(key) < 0) waiting.push(key); return; }
+    saving[key] = true; active++; busy++; renderStatus();
+    (async function () {
+      try {
+        do {
+          again[key] = false;
+          try { await writeOnce(key); }
+          catch (e) {
+            if (e && (e.code === "invalid_argument" || e.code === "quota_exceeded" || e.code === "revoked" || e.code === "not_granted")) throw e;
+            await new Promise(function (r) { setTimeout(r, 1200 + Math.random() * 800); });
+            await writeOnce(key);
+          }
+        } while (again[key]);
+        delete dirty[key];
+        persistLocal();
+      } catch (e) {
+        cloud = "denied";
+      } finally {
+        saving[key] = false; active--; busy--; renderStatus();
+        var nx = waiting.shift();
+        if (nx) flush(nx);
+      }
+    })();
+  }
   function renderStatus() {
-    var s = $("status"), t = "", warn = false;
-    if (cloud === "on") t = busy ? "Сохраняю…" : "Сохранено в Telegram";
-    else if (cloud === "off") t = "Открыто вне Telegram — записи хранятся только на этом устройстве";
-    else if (cloud === "denied") { t = "Не удалось сохранить в Telegram — записи остаются на этом устройстве"; warn = true; }
-    s.textContent = t;
+    var s = $("status"), k = "", warn = false;
+    if (cloud === "on") k = busy ? "st.saving" : ST.on;
+    else if (cloud === "off") k = ST.off;
+    else if (cloud === "denied") { k = ST.denied; warn = true; }
+    s.textContent = k ? t(k) : "";
     s.classList.toggle("warn", warn);
   }
 
@@ -650,83 +1065,92 @@ body.timing .app { padding-bottom: 160px; }
         if (!out.some(function (n) { return same(n, e.name); })) out.push(e.name);
       });
     });
-    DEFAULTS.forEach(function (n) {
+    DEFAULT_EX[lang].forEach(function (n) {
       if (out.length < 6 && !out.some(function (x) { return same(x, n); })) out.push(n);
     });
     return out.slice(0, 8);
   }
   function tonnage(d) {
-    var t = 0, sets = 0;
-    d.exercises.forEach(function (e) { e.sets.forEach(function (s) { t += s.w * s.r; sets++; }); });
-    return { kg: t, sets: sets };
+    var kg = 0, sets = 0;
+    d.exercises.forEach(function (e) { e.sets.forEach(function (s) { kg += s.w * s.r; sets++; }); });
+    return { kg: kg, sets: sets };
+  }
+  function planDays(p) { return Array.isArray(p.days) ? p.days : []; }
+  function planById(id) { return plans.filter(function (p) { return p.id === id; })[0] || null; }
+  // Which of the user's workouts a day belongs to: the one recorded when sets were ticked in My workout,
+  // otherwise the workout that shares the most exercises with that day.
+  function planOfDay(date) {
+    var d = days[date];
+    if (!d) return null;
+    if (d.plan) {
+      var p = planById(d.plan.id);
+      return { id: d.plan.id, name: p ? p.name : d.plan.name, plan: p };
+    }
+    var best = null, bestN = 0;
+    plans.forEach(function (p) {
+      var n = d.exercises.filter(function (e) { return p.items.some(function (it) { return same(it.name, e.name); }); }).length;
+      if (n > bestN) { bestN = n; best = p; }
+    });
+    if (best && bestN > 0) return { id: best.id, name: best.name, plan: best };
+    return null;
   }
 
-  // ---------- render ----------
+  // ---------- journal ----------
   function renderDate() {
     var isToday = cur === today();
-    $("dayTitle").textContent = isToday ? "Сегодня" : fmt(cur, { day: "numeric", month: "long" });
+    $("dayTitle").textContent = isToday ? t("date.today") : fmt(cur, { day: "numeric", month: "long" });
     var sub = $("daySub");
     sub.textContent = "";
     if (isToday) {
       sub.textContent = fmt(cur, { weekday: "long", day: "numeric", month: "long" });
     } else {
-      sub.appendChild(document.createTextNode(fmt(cur, { weekday: "long", year: "numeric" }) + " · "));
-      var b = el("button", "linkbtn", "к сегодня");
-      b.type = "button";
-      b.addEventListener("click", function () { go(today()); });
-      sub.appendChild(b);
+      sub.appendChild(txt(fmt(cur, { weekday: "long", year: "numeric" }) + " · "));
+      sub.appendChild(btn("linkbtn", t("date.toToday"), function () { go(today()); }));
     }
     $("next").disabled = isToday;
-    $("dayHead").textContent = isToday ? "Сегодня" : "Эта тренировка";
+    $("dayHead").textContent = isToday ? t("log.dayToday") : t("log.dayOther");
   }
-
   function renderHint() {
     var name = $("exName").value.trim(), box = $("lastHint");
     var last = name ? lastTime(name, cur) : null;
     if (!last) { box.hidden = true; return; }
-    box.textContent = "В прошлый раз, " + fmt(last.date, { day: "numeric", month: "short" }) + ": ";
-    var b = el("b", null, last.sets.map(setText).join(" · "));
-    box.appendChild(b);
+    box.textContent = t("lastTime", { d: fmt(last.date, { day: "numeric", month: "short" }) });
+    box.appendChild(el("b", null, last.sets.map(setText).join(" · ")));
     box.hidden = false;
   }
-
   function renderQuick() {
     var box = $("quick"), name = $("exName").value;
     box.textContent = "";
     recentNames().forEach(function (n) {
-      var b = el("button", null, n);
-      b.type = "button";
+      var b = btn(null, n, function () { pick(n); });
       b.setAttribute("aria-pressed", same(n, name) ? "true" : "false");
-      b.addEventListener("click", function () { pick(n); });
       box.appendChild(b);
     });
   }
-
   function renderDay() {
     var d = day(cur), list = $("dayList"), tot = $("totals");
     list.textContent = "";
     tot.textContent = "";
+    tot.removeAttribute("title");
     if (!d.exercises.length) {
-      list.appendChild(el("div", "empty", cur === today()
-        ? "Пока ничего не записано. Выберите упражнение, укажите вес и повторения — и нажмите «Добавить подход»."
-        : "В этот день записей нет."));
+      list.appendChild(el("div", "empty", cur === today() ? t("log.emptyToday") : t("log.emptyDay")));
       return;
     }
-    var t = tonnage(d);
-    tot.appendChild(el("b", null, String(t.sets)));
-    tot.appendChild(document.createTextNode(" " + plural(t.sets, "подход", "подхода", "подходов")));
-    if (t.kg > 0) {
-      tot.appendChild(document.createTextNode(" · всего поднято "));
-      tot.appendChild(el("b", null, num(t.kg) + " кг"));
-      tot.title = "Сумма по всем подходам: вес × повторения";
+    var tn = tonnage(d);
+    tot.appendChild(el("b", null, num(tn.sets)));
+    tot.appendChild(txt(" " + tp("sets", tn.sets)));
+    if (prefs.totals && tn.kg > 0) {
+      tot.appendChild(txt(" · " + t("lifted.total") + " "));
+      tot.appendChild(el("b", null, num(tn.kg) + " " + t("kg")));
+      tot.title = t("lifted.title");
     }
     d.exercises.forEach(function (ex, ei) {
       var card = el("div", "ex");
       card.appendChild(el("div", "name", ex.name));
       var kg = 0;
       ex.sets.forEach(function (s) { kg += s.w * s.r; });
-      card.appendChild(el("div", "meta",
-        ex.sets.length + " " + plural(ex.sets.length, "подход", "подхода", "подходов") + (kg > 0 ? " · поднято " + num(kg) + " кг" : "")));
+      card.appendChild(el("div", "meta", count(ex.sets.length, "sets") +
+        (prefs.totals && kg > 0 ? " · " + t("lifted.ex") + " " + num(kg) + " " + t("kg") : "")));
       var row = el("div", "sets");
       ex.sets.forEach(function (s, si) {
         var chip = el("span", "set");
@@ -734,39 +1158,34 @@ body.timing .app { padding-bottom: 160px; }
         chip.appendChild(el("span", "n", String(si + 1)));
         var v = el("span", "v");
         if (s.w > 0) {
-          v.appendChild(document.createTextNode(num(s.w) + " "));
-          v.appendChild(el("small", null, "кг"));
-          v.appendChild(document.createTextNode(" × " + s.r));
+          v.appendChild(txt(num(s.w) + " "));
+          v.appendChild(el("small", null, t("kg")));
+          v.appendChild(txt(" × " + s.r));
         } else {
           v.textContent = "× " + s.r;
         }
         chip.appendChild(v);
-        var del = el("button", "del", "×");
-        del.type = "button";
-        del.setAttribute("aria-label", "Удалить подход " + (si + 1) + ": " + setText(s));
-        del.addEventListener("click", function () { removeSet(ei, si); });
+        var del = btn("del", "×", function () { removeSet(ei, si); });
+        del.setAttribute("aria-label", t("del.setAria", { n: si + 1, s: setText(s) }));
         chip.appendChild(del);
         row.appendChild(chip);
       });
       var last = ex.sets[ex.sets.length - 1];
-      var more = el("button", "again", "+ ещё " + setText(last));
-      more.type = "button";
-      more.setAttribute("aria-label", "Добавить ещё один такой же подход: " + setText(last));
-      more.addEventListener("click", function () { addSet(ex.name, last.w, last.r); });
+      var more = btn("again", t("log.more", { s: setText(last) }), function () { addSet(ex.name, last.w, last.r); });
+      more.setAttribute("aria-label", t("log.moreAria", { s: setText(last) }));
       row.appendChild(more);
       card.appendChild(row);
-      card.appendChild(confirmRow("ex:" + ei, "Удалить упражнение", "Удалить «" + ex.name + "» и все его подходы?", function () {
+      card.appendChild(confirmRow("ex:" + ei, t("del.ex"), t("del.exQ", { n: ex.name }), function () {
         d.exercises.splice(ei, 1);
       }));
       list.appendChild(card);
     });
-    list.appendChild(confirmRow("day", "Удалить всю тренировку за этот день", "Удалить все записи за этот день?", function () {
+    list.appendChild(confirmRow("day", t("del.day"), t("del.dayQ"), function () {
       d.exercises.length = 0;
     }));
     justAdded = null;
   }
-
-  var delAsk = null;                           // which delete is waiting for confirmation
+  var delAsk = null;
   function confirmRow(key, label, question, doIt) {
     var row = el("div", "delrow");
     if (delAsk !== key) {
@@ -774,91 +1193,91 @@ body.timing .app { padding-bottom: 160px; }
       return row;
     }
     row.appendChild(el("span", null, question));
-    row.appendChild(btn("ghost danger", "Да, удалить", function () {
+    row.appendChild(btn("ghost danger", t("del.yes"), function () {
       delAsk = null;
       hideToast();
       doIt();
       touch(cur);
       renderData();
     }));
-    row.appendChild(btn("ghost", "Отмена", function () { delAsk = null; renderDay(); }));
+    row.appendChild(btn("ghost", t("cancel"), function () { delAsk = null; renderDay(); }));
     return row;
   }
 
-  function renderHistory() {
-    var list = $("histList");
-    list.textContent = "";
-    var dates = Object.keys(days).filter(function (d) { return d !== cur && days[d].exercises.length; }).sort().reverse();
-    $("histSec").hidden = !dates.length;
-    dates.slice(0, histShown).forEach(function (d) {
-      var b = el("button", "past");
-      b.type = "button";
-      var dd = el("span", "d", fmt(d, { day: "numeric", month: "short" }));
-      dd.appendChild(el("small", null, fmt(d, { weekday: "short" }) + (d.slice(0, 4) !== cur.slice(0, 4) ? " " + d.slice(0, 4) : "")));
-      b.appendChild(dd);
-      b.appendChild(el("span", "what", days[d].exercises.map(function (e) { return e.name; }).join(", ")));
-      var t = tonnage(days[d]);
-      b.appendChild(el("span", "cnt", t.sets + " " + plural(t.sets, "подход", "подхода", "подходов")));
-      b.addEventListener("click", function () { go(d); showTab("log"); window.scrollTo({ top: 0, behavior: "smooth" }); });
-      list.appendChild(b);
-    });
-    if (dates.length > histShown) {
-      var m = el("button", "linkbtn more", "Показать ещё");
-      m.type = "button";
-      m.addEventListener("click", function () { histShown += HIST_PAGE; renderHistory(); });
-      list.appendChild(m);
-    }
-  }
-
-  // ---------- calendar ----------
+  // ---------- calendar tab ----------
   var calMonth = cur.slice(0, 7);
   function renderCalendar() {
     var y = +calMonth.slice(0, 4), m = +calMonth.slice(5, 7);
-    var name = new Intl.DateTimeFormat("ru-RU", { month: "long" }).format(new Date(y, m - 1, 1));
+    var name = new Intl.DateTimeFormat(LOCALES[lang], { month: "long" }).format(new Date(y, m - 1, 1));
     $("calTitle").textContent = name.charAt(0).toUpperCase() + name.slice(1) + " " + y;
-    var grid = $("cal"), now = today(), count = 0;
+    var grid = $("cal"), now = today(), n = 0;
     grid.textContent = "";
-    ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].forEach(function (w) { grid.appendChild(el("div", "wd", w)); });
-    var offset = (new Date(y, m - 1, 1).getDay() + 6) % 7, n = new Date(y, m, 0).getDate();
+    dow().forEach(function (w) { grid.appendChild(el("div", "wd", w)); });
+    var offset = (new Date(y, m - 1, 1).getDay() + 6) % 7, last = new Date(y, m, 0).getDate();
     for (var i = 0; i < offset; i++) grid.appendChild(el("div"));
-    for (var d = 1; d <= n; d++) (function (date, d) {
-      var b = el("button", null, String(d)), has = !!(days[date] && days[date].exercises.length);
-      b.type = "button";
-      if (has) { b.classList.add("has"); count++; }
+    for (var d = 1; d <= last; d++) (function (date, d) {
+      var has = !!(days[date] && days[date].exercises.length);
+      var b = btn(null, String(d), function () { go(date); });
+      if (has) { b.classList.add("has"); n++; }
       if (date === now) b.classList.add("today");
       if (date === cur) b.classList.add("sel");
       b.disabled = date > now;
-      b.setAttribute("aria-label", fmt(date, { day: "numeric", month: "long" }) + (has ? ", есть тренировка" : ""));
-      b.addEventListener("click", function () { go(date); showTab("log"); window.scrollTo({ top: 0, behavior: "smooth" }); });
+      b.setAttribute("aria-label", fmt(date, { day: "numeric", month: "long" }) + (has ? t("cal.hasAria") : ""));
       grid.appendChild(b);
     })(calMonth + "-" + pad(d), d);
     $("calNext").disabled = calMonth >= now.slice(0, 7);
-    $("calNote").textContent = count
-      ? "Закрашены дни с тренировками. В этом месяце: " + count + " " + plural(count, "тренировка", "тренировки", "тренировок") + "."
-      : "В этом месяце тренировок нет. Нажмите на день, чтобы открыть его.";
+    $("calNote").textContent = n ? t("cal.note", { n: count(n, "workouts") }) : t("cal.noneMonth");
   }
   function moveMonth(by) {
     var d = new Date(+calMonth.slice(0, 4), +calMonth.slice(5, 7) - 1 + by, 1);
     calMonth = d.getFullYear() + "-" + pad(d.getMonth() + 1);
     renderCalendar();
   }
+  function renderHistory() {
+    var list = $("histList");
+    list.textContent = "";
+    var dates = Object.keys(days).filter(function (d) { return days[d].exercises.length; }).sort().reverse();
+    $("histSec").hidden = !dates.length;
+    dates.slice(0, histShown).forEach(function (d) {
+      var po = planOfDay(d);
+      var b = btn("past" + (d === cur ? " sel" : ""), null, function () {
+        go(d);
+        if (po && po.plan) {
+          planSel = po.plan.id; pickedFor = d; lsSet("wl-plan-sel", planSel);
+          renderPlan(true); showTab("plan");
+        } else {
+          showTab("log");
+        }
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+      var dd = el("span", "d", fmt(d, { day: "numeric", month: "short" }));
+      dd.appendChild(el("small", null, fmt(d, { weekday: "short" }) + (d.slice(0, 4) !== today().slice(0, 4) ? " " + d.slice(0, 4) : "")));
+      b.appendChild(dd);
+      b.appendChild(el("span", "what", po ? po.name : days[d].exercises.map(function (e) { return e.name; }).join(", ")));
+      b.appendChild(el("span", "cnt", count(tonnage(days[d]).sets, "sets")));
+      list.appendChild(b);
+    });
+    if (dates.length > histShown) {
+      list.appendChild(btn("linkbtn more", t("hist.more"), function () { histShown += HIST_PAGE; renderHistory(); }));
+    }
+  }
+  function renderCalendarTab() { renderCalendar(); renderHistory(); }
 
   // ---------- rest timer ----------
-  var REST_OPTS = [[60, "1 мин"], [90, "1:30"], [120, "2 мин"], [180, "3 мин"]];
+  var REST_OPTS = [60, 90, 120, 180];
+  var REST_CHOICES = [0, 30, 45, 60, 90, 120, 180, 300];
   var rest = lsGet("wl-rest", null) || {};
-  rest = { on: !!rest.on, sec: REST_OPTS.some(function (o) { return o[0] === rest.sec; }) ? rest.sec : 90 };
-  var tEnd = 0, tTotal = 0, tInt = null, tHide = null, actx = null, beepGain = null, wake = null;
+  rest = { on: !!rest.on, sec: REST_OPTS.indexOf(rest.sec) >= 0 ? rest.sec : 90 };
+  var tEnd = 0, tTotal = 0, tInt = null, tHide = null, actx = null, beepGain = null, wake = null, tDone = false;
 
   function renderRest() {
     $("restOn").checked = rest.on;
     var box = $("restOpts");
     box.hidden = !rest.on;
     box.textContent = "";
-    REST_OPTS.forEach(function (o) {
-      var b = el("button", null, o[1]);
-      b.type = "button";
-      b.setAttribute("aria-pressed", o[0] === rest.sec ? "true" : "false");
-      b.addEventListener("click", function () { rest.sec = o[0]; lsSet("wl-rest", rest); renderRest(); });
+    REST_OPTS.forEach(function (sec) {
+      var b = btn(null, restLabel(sec), function () { rest.sec = sec; lsSet("wl-rest", rest); renderRest(); });
+      b.setAttribute("aria-pressed", sec === rest.sec ? "true" : "false");
       box.appendChild(b);
     });
   }
@@ -886,7 +1305,6 @@ body.timing .app { padding-bottom: 160px; }
       beepGain = g;
     } catch (e) {}
   }
-  function clock(sec) { return Math.floor(sec / 60) + ":" + pad(sec % 60); }
   function tick() {
     var ms = tEnd - Date.now();
     if (ms <= 0) { finishRest(); return; }
@@ -897,6 +1315,11 @@ body.timing .app { padding-bottom: 160px; }
     $("timer").hidden = !on;
     document.body.classList.toggle("timing", on);
   }
+  function timerLabels() {
+    $("tLabel").textContent = tDone ? t("rest.done") : t("rest.label");
+    $("tStop").textContent = tDone ? t("rest.close") : t("rest.skip");
+    $("tPlus").textContent = t("rest.plus");
+  }
   function releaseWake() { if (wake) { try { wake.release(); } catch (e) {} wake = null; } }
   function startRest(sec) {
     var s = sec != null ? sec : (rest.on ? rest.sec : 0);
@@ -904,10 +1327,10 @@ body.timing .app { padding-bottom: 160px; }
     clearInterval(tInt); clearTimeout(tHide);
     tTotal = s;
     tEnd = Date.now() + s * 1000;
+    tDone = false;
     $("timer").classList.remove("done");
-    $("tLabel").textContent = "Отдых";
+    timerLabels();
     $("tPlus").hidden = false;
-    $("tStop").textContent = "Пропустить";
     showTimer(true);
     scheduleBeep(s);
     tick();
@@ -918,11 +1341,11 @@ body.timing .app { padding-bottom: 160px; }
   }
   function finishRest() {
     clearInterval(tInt); tInt = null;
+    tDone = true;
     $("timer").classList.add("done");
-    $("tLabel").textContent = "Отдых окончен — следующий подход";
+    timerLabels();
     $("tTime").textContent = "";
     $("tPlus").hidden = true;
-    $("tStop").textContent = "Закрыть";
     haptic("done");
     try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) {}
     releaseWake();
@@ -934,51 +1357,76 @@ body.timing .app { padding-bottom: 160px; }
     showTimer(false);
   }
 
-  // ---------- tabs ----------
+  // ---------- tabs and settings view ----------
   var TABS = ["log", "plan", "cal"];
   var tab = lsGet("wl-tab", "log");
   if (TABS.indexOf(tab) < 0) tab = "log";
-  function showTab(t) {
-    tab = t;
-    lsSet("wl-tab", t);
+  var inSettings = false;
+  function showTab(name) {
+    inSettings = false;
+    tab = name;
+    lsSet("wl-tab", name);
     TABS.forEach(function (k) {
-      $("tab-" + k).hidden = k !== t;
-      $("datebar").hidden = t === "cal";
-      $("tabbtn-" + k).setAttribute("aria-selected", k === t ? "true" : "false");
+      $("tab-" + k).hidden = k !== name;
+      $("tabbtn-" + k).setAttribute("aria-selected", k === name ? "true" : "false");
     });
+    $("tab-set").hidden = true;
+    $("tabs").classList.remove("off");
+    $("gear").setAttribute("aria-expanded", "false");
+    $("datebar").hidden = name === "cal";
+  }
+  function openSettings() {
+    if (inSettings) { showTab(tab); return; }
+    inSettings = true;
+    TABS.forEach(function (k) { $("tab-" + k).hidden = true; });
+    $("datebar").hidden = true;
+    $("tab-set").hidden = false;
+    $("tabs").classList.add("off");
+    $("gear").setAttribute("aria-expanded", "true");
+    setMsg = null;
+    renderSettings();
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   // ---------- my workout (plan) ----------
   var planSel = lsGet("wl-plan-sel", null);
   var editing = null, editErr = "", confirmDel = false, planStale = false, drafts = {};
+  var itemEdit = null;                         // { planId, index (-1 = new), draft, err, del }
+  var histOpen = {};
+  var pickedFor = null;
 
-  function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
-  function btn(cls, text, fn) {
-    var b = el("button", cls, text);
-    b.type = "button";
-    b.addEventListener("click", fn);
-    return b;
-  }
-  function savePlans() { dirty.plans = true; persistLocal(); flush("plans"); renderStatus(); }
   function doneSets(name) {
     var ex = day(cur).exercises.filter(function (e) { return same(e.name, name); })[0];
     return ex ? ex.sets : [];
   }
-  function planLine(it) {
-    return it.sets + " " + plural(it.sets, "подход", "подхода", "подходов") + " × " + it.reps +
-      (it.w > 0 ? ", " + num(it.w) + " кг" : ", свой вес");
-  }
-
-  var REST_CHOICES = [[0, "Без таймера"], [30, "30 с"], [45, "45 с"], [60, "1 мин"], [90, "1:30"], [120, "2 мин"], [180, "3 мин"], [300, "5 мин"]];
-  var itemEdit = null;                         // { planId, index (-1 = new), draft, err, del }
   function restOf(it) { return it.rest == null ? 90 : it.rest; }
-  function restLabel(sec) {
-    var o = REST_CHOICES.filter(function (c) { return c[0] === sec; })[0];
-    return o ? o[1] : clock(sec);
+  function planLine(it) {
+    return count(it.sets, "sets") + " × " + it.reps + ", " + (it.w > 0 ? num(it.w) + " " + t("kg") : t("bodyweight"));
   }
-  function kgText(w, r) { return w > 0 ? num(w) + " кг × " + r : "× " + r; }
+  function curDow() { return (toDate(cur).getDay() + 6) % 7; }
+  // Show the workout that belongs to the selected day.
+  function pickPlanForDay() {
+    if (pickedFor === cur || !plans.length) return;
+    pickedFor = cur;
+    var po = planOfDay(cur);
+    var best = po && po.plan ? po.plan : null;
+    if (!best) {
+      var logged = day(cur).exercises, bestN = 0;
+      plans.forEach(function (p) {
+        var n = p.items.filter(function (it) { return logged.some(function (e) { return same(e.name, it.name) && e.sets.length; }); }).length;
+        if (n > bestN) { bestN = n; best = p; }
+      });
+    }
+    if (!best) best = plans.filter(function (x) { return planDays(x).indexOf(curDow()) >= 0; })[0];
+    if (best) planSel = best.id;
+  }
   function draftOf(it) {
-    return { name: it.name, sets: String(it.sets), reps: String(it.reps), w: String(it.w).replace(".", ","), rest: restOf(it) };
+    return { name: it.name, sets: String(it.sets), reps: String(it.reps), w: dec(it.w), rest: restOf(it) };
+  }
+  function blankItem() { return { name: "", sets: "3", reps: "10", w: dec(20), rest: 90 }; }
+  function clampInt(v, def, max) {
+    var n = Math.round(parseNum(v));
+    return n >= 1 ? Math.min(n, max) : def;
   }
   function parseItem(d) {
     var name = d.name.trim().replace(/\s+/g, " ");
@@ -992,24 +1440,37 @@ body.timing .app { padding-bottom: 160px; }
       rest: +d.rest || 0
     };
   }
+  function bound(cls, id, obj, key, mode) {
+    var i = el("input", cls);
+    i.id = id; i.type = "text"; i.value = obj[key];
+    if (mode) i.inputMode = mode;
+    i.addEventListener("input", function () { obj[key] = i.value; });
+    return i;
+  }
+  function labeled(text, input) {
+    var w = el("div"), l = el("label", null, text);
+    l.htmlFor = input.id;
+    w.appendChild(l); w.appendChild(input);
+    return w;
+  }
   function itemFields(it, p) {
     var g = el("div", "ed3");
-    g.appendChild(labeled("Подходы", bound("mini", p + "sets", it, "sets", "numeric")));
-    g.appendChild(labeled("Повторения", bound("mini", p + "reps", it, "reps", "numeric")));
-    g.appendChild(labeled("Вес, кг", bound("mini", p + "w", it, "w", "decimal")));
+    g.appendChild(labeled(t("f.sets"), bound("mini", p + "sets", it, "sets", "numeric")));
+    g.appendChild(labeled(t("f.reps"), bound("mini", p + "reps", it, "reps", "numeric")));
+    g.appendChild(labeled(t("f.w"), bound("mini", p + "w", it, "w", "decimal")));
     var s = el("select", "mini");
     s.id = p + "rest";
-    REST_CHOICES.forEach(function (o) {
-      var op = el("option", null, o[1]);
-      op.value = String(o[0]);
+    REST_CHOICES.forEach(function (sec) {
+      var op = el("option", null, restLabel(sec));
+      op.value = String(sec);
       s.appendChild(op);
     });
     s.value = String(it.rest);
     s.addEventListener("change", function () { it.rest = +s.value; });
-    g.appendChild(labeled("Отдых после подхода", s));
+    g.appendChild(labeled(t("f.rest"), s));
     return g;
   }
-  function removeToday(name, k) {
+  function removeOnDay(name, k) {
     var d = days[cur], ei = -1;
     if (!d) return;
     d.exercises.forEach(function (e, i) { if (same(e.name, name)) ei = i; });
@@ -1017,7 +1478,7 @@ body.timing .app { padding-bottom: 160px; }
   }
   function setRow(plan, it, i, k, sets) {
     var n = sets.length, row = el("div", "srow"), key = plan.id + "|" + i;
-    function tick() {
+    function tickSet() {
       var dr = drafts[key], wi = $("pw-" + i), ri = $("pr-" + i);
       if (!dr) return;
       var w = String(dr.w).trim() === "" ? 0 : parseNum(dr.w), r = Math.round(parseNum(dr.r));
@@ -1025,37 +1486,34 @@ body.timing .app { padding-bottom: 160px; }
       if (!(r >= 1) || r > 1000) { if (ri) { ri.classList.add("bad"); ri.focus(); } return; }
       if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
       delete drafts[key];
-      addSet(it.name, Math.round(w * 100) / 100, r, cur, restOf(it));
+      addSet(it.name, Math.round(w * 100) / 100, r, cur, restOf(it), plan);
     }
     function circle() {
-      var c = btn("chk", "✓", tick);
-      c.setAttribute("aria-label", "Отметить подход выполненным, " + it.name);
+      var c = btn("chk", "✓", tickSet);
+      c.setAttribute("aria-label", t("plan.tickAria", { n: it.name }));
       return c;
     }
     row.appendChild(el("span", "num", String(k + 1)));
     if (k < n) {
       row.appendChild(el("span", "val", kgText(sets[k].w, sets[k].r)));
-      var on = btn("chk on", "✓", function () { removeToday(it.name, k); });
-      on.setAttribute("aria-label", "Подход " + (k + 1) + " выполнен. Снять отметку");
+      var on = btn("chk on", "✓", function () { removeOnDay(it.name, k); });
+      on.setAttribute("aria-label", t("plan.untickAria", { k: k + 1 }));
       row.appendChild(on);
     } else if (k === n) {
       var last = sets[n - 1];
-      var dr = drafts[key] || (drafts[key] = {
-        w: String(last ? last.w : it.w).replace(".", ","),
-        r: String(last ? last.r : it.reps)
-      });
+      var dr = drafts[key] || (drafts[key] = { w: dec(last ? last.w : it.w), r: String(last ? last.r : it.reps) });
       row.classList.add("next");
       var pair = el("div", "pair"), wi = el("input", "mini"), ri = el("input", "mini");
       wi.id = "pw-" + i; wi.type = "text"; wi.inputMode = "decimal"; wi.value = dr.w;
-      wi.setAttribute("aria-label", "Вес в килограммах, " + it.name);
+      wi.setAttribute("aria-label", t("plan.wAria", { n: it.name }));
       ri.id = "pr-" + i; ri.type = "text"; ri.inputMode = "numeric"; ri.value = dr.r;
-      ri.setAttribute("aria-label", "Повторения, " + it.name);
+      ri.setAttribute("aria-label", t("plan.rAria", { n: it.name }));
       wi.addEventListener("input", function () { dr.w = wi.value; wi.classList.remove("bad"); });
       ri.addEventListener("input", function () { dr.r = ri.value; ri.classList.remove("bad"); });
       wi.addEventListener("focus", function () { wi.select(); });
       ri.addEventListener("focus", function () { ri.select(); });
       pair.appendChild(wi);
-      pair.appendChild(el("span", "unit", "кг ×"));
+      pair.appendChild(el("span", "unit", t("unitKgX")));
       pair.appendChild(ri);
       row.appendChild(pair);
       row.appendChild(circle());
@@ -1074,24 +1532,24 @@ body.timing .app { padding-bottom: 160px; }
   }
   function itemEditor(plan) {
     var s = itemEdit, card = el("div", "edrow");
-    card.appendChild(el("div", "lbl", s.index < 0 ? "Новое упражнение" : "Изменить упражнение"));
+    card.appendChild(el("div", "lbl", s.index < 0 ? t("ie.new") : t("ie.edit")));
     var n = bound("text", "ie-name", s.draft, "name");
-    n.placeholder = "Название упражнения";
+    n.placeholder = t("ie.namePh");
     n.maxLength = 60;
-    n.setAttribute("aria-label", "Название упражнения");
+    n.setAttribute("aria-label", t("ie.namePh"));
     card.appendChild(n);
     card.appendChild(itemFields(s.draft, "ie-"));
     if (s.err) card.appendChild(el("div", "err", s.err));
     var act = el("div", "actions");
-    act.appendChild(btn("primary", "Сохранить", function () {
+    act.appendChild(btn("primary", t("save"), function () {
       var it = parseItem(s.draft);
-      if (!it) { s.err = "Введите название упражнения."; renderPlan(true); return; }
+      if (!it) { s.err = t("log.nameErr"); renderPlan(true); return; }
       if (s.index < 0) plan.items.push(it); else plan.items[s.index] = it;
       finishItemEdit(plan);
     }));
-    act.appendChild(btn("ghost", "Отмена", function () { itemEdit = null; renderPlan(true); }));
+    act.appendChild(btn("ghost", t("cancel"), function () { itemEdit = null; renderPlan(true); }));
     if (s.index >= 0) {
-      act.appendChild(btn("ghost danger", s.del ? "Точно удалить?" : "Удалить", function () {
+      act.appendChild(btn("ghost danger", s.del ? t("deleteSure") : t("delete"), function () {
         if (!s.del) { s.del = true; renderPlan(true); return; }
         plan.items.splice(s.index, 1);
         finishItemEdit(plan);
@@ -1107,8 +1565,7 @@ body.timing .app { padding-bottom: 160px; }
     renderPlan(true);
   }
 
-  // ---------- plan: today's weight and progress ----------
-  var histOpen = {};
+  // progress: today's weight and history chart
   var SVGNS = "http://www.w3.org/2000/svg";
   function svg(tag, attrs, text) {
     var n = document.createElementNS(SVGNS, tag);
@@ -1132,48 +1589,48 @@ body.timing .app { padding-bottom: 160px; }
     if (w === it.w) return;
     it.w = w;
     var key = plan.id + "|" + i, dr = drafts[key];
-    drafts[key] = { w: String(w).replace(".", ","), r: dr ? dr.r : String(it.reps) };
+    drafts[key] = { w: dec(w), r: dr ? dr.r : String(it.reps) };
     savePlans();
     renderPlan(true);
   }
   function weightRow(plan, it, i) {
     var row = el("div", "wrow");
-    row.appendChild(el("div", "lbl", "Вес на эту тренировку"));
+    row.appendChild(el("div", "lbl", t("plan.weightToday")));
     var st = el("div", "wstep");
     var minus = btn(null, "−", function () { stepWeight(plan, it, i, -2.5); });
-    minus.setAttribute("aria-label", "Уменьшить вес на 2,5 кг, " + it.name);
+    minus.setAttribute("aria-label", t("plan.wDown", { n: it.name }));
     var plus = btn(null, "+", function () { stepWeight(plan, it, i, 2.5); });
-    plus.setAttribute("aria-label", "Увеличить вес на 2,5 кг, " + it.name);
+    plus.setAttribute("aria-label", t("plan.wUp", { n: it.name }));
     st.appendChild(minus);
-    st.appendChild(el("span", null, it.w > 0 ? num(it.w) + " кг" : "свой вес"));
+    st.appendChild(el("span", null, it.w > 0 ? num(it.w) + " " + t("kg") : t("bodyweight")));
     st.appendChild(plus);
     row.appendChild(st);
     return row;
   }
+  function shortDate(d) {
+    return fmt(d, { day: "numeric", month: "short" }) + (d.slice(0, 4) !== today().slice(0, 4) ? " " + d.slice(0, 4) : "");
+  }
   function historyPanel(it) {
     var box = el("div", "hist"), all = sessionsOf(it.name);
     if (!all.length) {
-      box.appendChild(el("div", "readout", "Истории пока нет — она появится после первого отмеченного подхода."));
+      box.appendChild(el("div", "readout", t("ph.none")));
       return box;
     }
-    var byW = all.some(function (x) { return x.top > 0; }), unit = byW ? "кг" : "повт.";
+    var byW = all.some(function (x) { return x.top > 0; }), unit = byW ? t("kg") : t("ph.repsUnit");
     function val(x) { return byW ? x.top : x.reps; }
-    function shortDate(d) {
-      return fmt(d, { day: "numeric", month: "short" }) + (d.slice(0, 4) !== today().slice(0, 4) ? " " + d.slice(0, 4) : "");
-    }
     var first = all[0], lastS = all[all.length - 1];
     var sum = el("div", "totals");
-    sum.appendChild(document.createTextNode((byW ? "Лучший вес за тренировку: " : "Максимум повторений в подходе: ")));
+    sum.appendChild(txt(byW ? t("ph.bestW") : t("ph.bestR")));
     if (all.length > 1) {
       var diff = Math.round((val(lastS) - val(first)) * 100) / 100;
       sum.appendChild(el("b", null, num(val(first)) + " " + unit));
-      sum.appendChild(document.createTextNode(" → "));
+      sum.appendChild(txt(" → "));
       sum.appendChild(el("b", null, num(val(lastS)) + " " + unit));
-      sum.appendChild(document.createTextNode(" (" + (diff > 0 ? "+" : "") + num(diff) + " " + unit + " за " + all.length + " " +
-        plural(all.length, "тренировку", "тренировки", "тренировок") + ")"));
+      sum.appendChild(txt(" (" + (diff > 0 ? "+" : "") + num(diff) + " " + unit + " " +
+        t("ph.over", { n: num(all.length), w: tp("workoutsAcc", all.length) }) + ")"));
     } else {
       sum.appendChild(el("b", null, num(val(first)) + " " + unit));
-      sum.appendChild(document.createTextNode(". График появится после второй тренировки."));
+      sum.appendChild(txt(t("ph.one")));
     }
     box.appendChild(sum);
 
@@ -1184,7 +1641,7 @@ body.timing .app { padding-bottom: 160px; }
       var X = function (k) { return L + k * (W - L - R) / (pts.length - 1); };
       var Y = function (v) { return T + (hi - v) * (H - T - B) / (hi - lo); };
       var root = svg("svg", { viewBox: "0 0 " + W + " " + H, "class": "chart", role: "img",
-        "aria-label": "График: " + (byW ? "лучший вес" : "максимум повторений") + " по тренировкам, " + it.name });
+        "aria-label": t("ph.chartAria", { m: byW ? t("ph.mW") : t("ph.mR"), n: it.name }) });
       [lo, (lo + hi) / 2, hi].forEach(function (v) {
         root.appendChild(svg("line", { x1: L, x2: W - R, y1: Y(v), y2: Y(v), "class": "grid" }));
         root.appendChild(svg("text", { x: L - 6, y: Y(v) + 3, "text-anchor": "end", "class": "axis" }, num(Math.round(v * 10) / 10)));
@@ -1204,9 +1661,9 @@ body.timing .app { padding-bottom: 160px; }
         cross.setAttribute("x1", X(k)); cross.setAttribute("x2", X(k));
         dots.forEach(function (c, j) { c.setAttribute("r", j === k ? 6 : 4); });
         readout.textContent = "";
-        readout.appendChild(document.createTextNode(fmt(pts[k].date, { day: "numeric", month: "long" }) + ": "));
+        readout.appendChild(txt(fmt(pts[k].date, { day: "numeric", month: "long" }) + ": "));
         readout.appendChild(el("b", null, num(val(pts[k])) + " " + unit));
-        readout.appendChild(document.createTextNode(" · " + pts[k].sets.map(setText).join(" · ")));
+        readout.appendChild(txt(" · " + pts[k].sets.map(setText).join(" · ")));
       };
       var step = (W - L - R) / (pts.length - 1);
       pts.forEach(function (p, k) {
@@ -1219,7 +1676,6 @@ body.timing .app { padding-bottom: 160px; }
       box.appendChild(root);
       box.appendChild(readout);
     }
-
     var listBox = el("div");
     all.slice(-8).reverse().forEach(function (x) {
       var r = el("div", "hrow");
@@ -1231,24 +1687,6 @@ body.timing .app { padding-bottom: 160px; }
     return box;
   }
 
-  var DOW = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
-  var DOW_FULL = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
-  function planDays(p) { return Array.isArray(p.days) ? p.days : []; }
-  function curDow() { return (toDate(cur).getDay() + 6) % 7; }
-  // Show the workout that belongs to the selected day: the one whose exercises were logged then, else the one scheduled for that weekday.
-  var pickedFor = null;
-  function pickPlanForDay() {
-    if (pickedFor === cur || !plans.length) return;
-    pickedFor = cur;
-    var logged = day(cur).exercises, best = null, bestN = 0;
-    plans.forEach(function (p) {
-      var n = p.items.filter(function (it) { return logged.some(function (e) { return same(e.name, it.name) && e.sets.length; }); }).length;
-      if (n > bestN) { bestN = n; best = p; }
-    });
-    if (!best) best = plans.filter(function (x) { return planDays(x).indexOf(curDow()) >= 0; })[0];
-    if (best) planSel = best.id;
-  }
-
   function renderPlan(force) {
     pickPlanForDay();
     if (editing) return;
@@ -1258,51 +1696,45 @@ body.timing .app { padding-bottom: 160px; }
     box.textContent = "";
 
     if (!plans.length) {
-      box.appendChild(el("div", "empty",
-        "Составьте свою тренировку: список упражнений с подходами, повторениями и весом. " +
-        "На занятии отмечайте выполненные подходы — они сами попадут в журнал."));
-      box.appendChild(btn("primary", "Создать тренировку", function () { startEdit(null); }));
+      box.appendChild(el("div", "empty", t("plan.empty")));
+      box.appendChild(btn("primary", t("plan.create"), function () { startEdit(null); }));
       return;
     }
-
-    var plan = plans.filter(function (p) { return p.id === planSel; })[0] || plans[0];
+    var plan = planById(planSel) || plans[0];
     planSel = plan.id;
 
     var pickRow = el("div", "quick");
     plans.forEach(function (p) {
       var b = btn(null, p.name, function () { planSel = p.id; itemEdit = null; lsSet("wl-plan-sel", planSel); renderPlan(true); });
       b.setAttribute("aria-pressed", p.id === plan.id ? "true" : "false");
-      if (planDays(p).length) b.appendChild(el("small", null, planDays(p).map(function (d) { return DOW[d]; }).join(", ")));
+      if (planDays(p).length) b.appendChild(el("small", null, planDays(p).map(function (d) { return dow()[d]; }).join(", ")));
       pickRow.appendChild(b);
     });
-    pickRow.appendChild(btn(null, "+ Новая", function () { startEdit(null); }));
+    pickRow.appendChild(btn(null, t("plan.new"), function () { startEdit(null); }));
     box.appendChild(pickRow);
 
-    var head = el("div", "planhead");
-    var title = el("div", "plantitle");
+    var head = el("div", "planhead"), title = el("div", "plantitle");
     title.appendChild(el("div", "planname", plan.name));
     if (planDays(plan).length) {
       var dw = el("div", "dow");
       planDays(plan).forEach(function (d) {
-        var chip = el("span", d === curDow() ? "now" : null, DOW[d]);
-        chip.title = DOW_FULL[d];
+        var chip = el("span", d === curDow() ? "now" : null, dow()[d]);
+        chip.title = dowFull(d);
         dw.appendChild(chip);
       });
       title.appendChild(dw);
     }
     head.appendChild(title);
-    head.appendChild(btn("ghost", "Изменить", function () { startEdit(plan); }));
+    head.appendChild(btn("ghost", t("plan.edit"), function () { startEdit(plan); }));
     box.appendChild(head);
 
     var total = 0, done = 0;
     plan.items.forEach(function (it) { total += it.sets; done += Math.min(it.sets, doneSets(it.name).length); });
-    var prog = el("div");
-    var t = el("div", "totals");
-    t.appendChild(document.createTextNode((cur === today() ? "Сегодня" : fmt(cur, { day: "numeric", month: "long" })) + " выполнено "));
-    t.appendChild(el("b", null, done + " из " + total));
-    t.appendChild(document.createTextNode(" " + plural(total, "подхода", "подходов", "подходов") +
-      (done >= total ? " — тренировка завершена" : "")));
-    prog.appendChild(t);
+    var prog = el("div"), tl = el("div", "totals");
+    tl.appendChild(txt(t("plan.progPre", { d: cur === today() ? t("date.today") : fmt(cur, { day: "numeric", month: "long" }) })));
+    tl.appendChild(el("b", null, t("plan.of", { x: num(done), y: num(total) })));
+    tl.appendChild(txt(t("plan.progSuf", { sets: tp("setsOf", total) }) + (total && done >= total ? t("plan.finished") : "")));
+    prog.appendChild(tl);
     var bar = el("div", "bar"), fill = el("i");
     bar.style.marginTop = "8px";
     fill.style.width = (total ? Math.round(done / total * 100) : 0) + "%";
@@ -1317,79 +1749,66 @@ body.timing .app { padding-bottom: 160px; }
       var card = el("div", "ex" + (complete ? " done" : ""));
       var h = el("div", "exhead");
       h.appendChild(el("div", "name", it.name));
-      h.appendChild(el("div", "badge", complete ? "✓ выполнено" : n + " из " + it.sets));
+      h.appendChild(el("div", "badge", complete ? t("plan.badgeDone") : t("plan.of", { x: n, y: it.sets })));
       card.appendChild(h);
-      var meta = el("div", "meta", planLine(it) + " · " + (restSec ? "отдых " + restLabel(restSec) : "без таймера") + " · ");
+      var meta = el("div", "meta", planLine(it) + " · " + (restSec ? t("plan.restX", { x: restLabel(restSec) }) : t("plan.noTimer")) + " · ");
       meta.style.marginBottom = "0";
-      meta.appendChild(btn("linkbtn", "изменить", function () { openItemEdit(plan, i); }));
+      meta.appendChild(btn("linkbtn", t("plan.editLink"), function () { openItemEdit(plan, i); }));
       var hkey = plan.id + "|" + i;
-      meta.appendChild(document.createTextNode(" · "));
-      meta.appendChild(btn("linkbtn", histOpen[hkey] ? "скрыть прогресс" : "прогресс", function () {
-        histOpen[hkey] = !histOpen[hkey];
-        renderPlan(true);
-      }));
+      if (prefs.progress) {
+        meta.appendChild(txt(" · "));
+        meta.appendChild(btn("linkbtn", histOpen[hkey] ? t("plan.hideProgress") : t("plan.progress"), function () {
+          histOpen[hkey] = !histOpen[hkey];
+          renderPlan(true);
+        }));
+      }
       card.appendChild(meta);
       var prev = lastTime(it.name, cur);
       if (prev) {
-        var ph = el("div", "hint", "В прошлый раз, " + fmt(prev.date, { day: "numeric", month: "short" }) + ": ");
+        var ph = el("div", "hint", t("lastTime", { d: fmt(prev.date, { day: "numeric", month: "short" }) }));
         ph.appendChild(el("b", null, prev.sets.map(setText).join(" · ")));
         card.appendChild(ph);
       }
       if (!complete) card.appendChild(weightRow(plan, it, i));
-      var rows = el("div", "srows"), count = Math.max(it.sets, n);
-      for (var k = 0; k < count; k++) rows.appendChild(setRow(plan, it, i, k, sets));
+      var rows = el("div", "srows"), cnt = Math.max(it.sets, n);
+      for (var k = 0; k < cnt; k++) rows.appendChild(setRow(plan, it, i, k, sets));
       card.appendChild(rows);
       if (complete && n) {
         var last = sets[n - 1];
-        card.appendChild(btn("again", "+ ещё подход " + kgText(last.w, last.r), function () {
-          addSet(it.name, last.w, last.r, cur, restSec);
+        card.appendChild(btn("again", t("plan.more", { s: kgText(last.w, last.r) }), function () {
+          addSet(it.name, last.w, last.r, cur, restSec, plan);
         }));
       }
-      if (histOpen[hkey]) card.appendChild(historyPanel(it));
+      if (prefs.progress && histOpen[hkey]) card.appendChild(historyPanel(it));
       list.appendChild(card);
     });
     if (itemEdit && itemEdit.planId === plan.id && itemEdit.index === -1) list.appendChild(itemEditor(plan));
     box.appendChild(list);
-    if (!itemEdit) box.appendChild(btn("again", "+ Добавить упражнение", function () { openItemEdit(plan, -1); }));
-    box.appendChild(el("div", "hint", "Нажмите на кружок справа — подход отметится и запишется в журнал за выбранный день; для сегодняшнего дня включится таймер отдыха. Повторное нажатие на галочку снимает отметку."));
+    if (!itemEdit) box.appendChild(btn("again", t("plan.addEx"), function () { openItemEdit(plan, -1); }));
+    box.appendChild(el("div", "hint", t("plan.hint")));
   }
 
-  function blankItem() { return { name: "", sets: "3", reps: "10", w: "20", rest: 90 }; }
   function startEdit(plan) {
     editing = plan
-      ? { id: plan.id, name: plan.name, isNew: false, days: planDays(plan), items: plan.items.map(draftOf) }
+      ? { id: plan.id, name: plan.name, isNew: false, days: planDays(plan).slice(), items: plan.items.map(draftOf) }
       : { id: newId(), name: "", isNew: true, days: [], items: [blankItem()] };
     if (!editing.items.length) editing.items.push(blankItem());
     editErr = ""; confirmDel = false;
     renderEditor();
   }
-  function bound(cls, id, obj, key, mode) {
-    var i = el("input", cls);
-    i.id = id; i.type = "text"; i.value = obj[key];
-    if (mode) i.inputMode = mode;
-    i.addEventListener("input", function () { obj[key] = i.value; });
-    return i;
-  }
-  function labeled(text, input) {
-    var w = el("div"), l = el("label", null, text);
-    l.htmlFor = input.id;
-    w.appendChild(l); w.appendChild(input);
-    return w;
-  }
   function renderEditor() {
     var box = $("planView"), e = editing;
     box.textContent = "";
-    box.appendChild(el("div", "planname", e.isNew ? "Новая тренировка" : "Изменить тренировку"));
-
+    box.appendChild(el("div", "planname", e.isNew ? t("ed.new") : t("ed.edit")));
     var nameIn = bound("text", "planName", e, "name");
-    nameIn.placeholder = "Например, день ног";
+    nameIn.placeholder = t("ed.namePh");
     nameIn.maxLength = 40;
-    box.appendChild(labeled("Название", nameIn));
+    box.appendChild(labeled(t("ed.name"), nameIn));
 
     var dayWrap = el("div");
-    dayWrap.appendChild(el("div", "lbl", "День недели — можно выбрать несколько"));
-    var pick = el("div", "daypick");
-    DOW.forEach(function (name, d) {
+    dayWrap.appendChild(el("div", "lbl", t("ed.days")));
+    var pickRow = el("div", "daypick");
+    dow().forEach(function (name, d) {
       var b = btn(null, name, function () {
         var at = e.days.indexOf(d);
         if (at >= 0) e.days.splice(at, 1); else e.days.push(d);
@@ -1397,67 +1816,60 @@ body.timing .app { padding-bottom: 160px; }
       });
       b.id = "day-" + d;
       b.setAttribute("aria-pressed", e.days.indexOf(d) >= 0 ? "true" : "false");
-      b.setAttribute("aria-label", DOW_FULL[d]);
-      pick.appendChild(b);
+      b.setAttribute("aria-label", dowFull(d));
+      pickRow.appendChild(b);
     });
-    dayWrap.appendChild(pick);
+    dayWrap.appendChild(pickRow);
     box.appendChild(dayWrap);
 
     var list = el("div", "list");
     e.items.forEach(function (it, i) {
       var row = el("div", "edrow"), top = el("div", "edtop");
       var n = bound("text", "ed-name-" + i, it, "name");
-      n.placeholder = "Упражнение " + (i + 1);
+      n.placeholder = t("ed.exPh", { n: i + 1 });
       n.maxLength = 60;
-      n.setAttribute("aria-label", "Название упражнения " + (i + 1));
+      n.setAttribute("aria-label", t("ed.exAria", { n: i + 1 }));
       top.appendChild(n);
       var x = btn("xbtn", "×", function () {
         e.items.splice(i, 1);
         if (!e.items.length) e.items.push(blankItem());
         renderEditor();
       });
-      x.setAttribute("aria-label", "Убрать упражнение " + (i + 1));
+      x.setAttribute("aria-label", t("ed.rmAria", { n: i + 1 }));
       top.appendChild(x);
       row.appendChild(top);
       row.appendChild(itemFields(it, "ed-" + i + "-"));
       list.appendChild(row);
     });
     box.appendChild(list);
-    box.appendChild(btn("again", "+ Добавить упражнение", function () {
+    box.appendChild(btn("again", t("plan.addEx"), function () {
       e.items.push(blankItem());
       renderEditor();
       var f = $("ed-name-" + (e.items.length - 1));
       if (f) f.focus();
     }));
     if (editErr) box.appendChild(el("div", "err", editErr));
-
     var act = el("div", "actions");
-    act.appendChild(btn("primary", "Сохранить", saveEdit));
-    act.appendChild(btn("ghost", "Отмена", function () { editing = null; renderPlan(); }));
+    act.appendChild(btn("primary", t("save"), saveEdit));
+    act.appendChild(btn("ghost", t("cancel"), function () { editing = null; renderPlan(); }));
     if (!e.isNew) {
-      act.appendChild(btn("ghost danger", confirmDel ? "Точно удалить?" : "Удалить", function () {
+      act.appendChild(btn("ghost danger", confirmDel ? t("deleteSure") : t("delete"), function () {
         if (!confirmDel) { confirmDel = true; renderEditor(); return; }
         plans = plans.filter(function (p) { return p.id !== e.id; });
         editing = null;
         savePlans();
         renderPlan();
+        renderCalendarTab();
       }));
     }
     box.appendChild(act);
   }
-  function clampInt(v, def, max) {
-    var n = Math.round(parseNum(v));
-    return n >= 1 ? Math.min(n, max) : def;
-  }
   function saveEdit() {
     var e = editing, items = [];
-    e.items.forEach(function (d) {
-      var it = parseItem(d);
-      if (it) items.push(it);
-    });
-    if (!items.length) { editErr = "Добавьте хотя бы одно упражнение с названием."; renderEditor(); return; }
-    if (!e.days.length) { editErr = "Выберите день недели для этой тренировки."; renderEditor(); return; }
-    var plan = { id: e.id, name: e.name.trim() || "Тренировка " + (plans.length + (e.isNew ? 1 : 0)),
+    e.items.forEach(function (d) { var it = parseItem(d); if (it) items.push(it); });
+    if (!items.length) { editErr = t("ed.errItems"); renderEditor(); return; }
+    if (!e.days.length) { editErr = t("ed.errDays"); renderEditor(); return; }
+    var plan = { id: e.id, name: e.name.trim() || t("ed.defName", { n: plans.length + (e.isNew ? 1 : 0) }),
       days: e.days.slice().sort(), items: items };
     var at = -1;
     plans.forEach(function (p, i) { if (p.id === plan.id) at = i; });
@@ -1468,9 +1880,202 @@ body.timing .app { padding-bottom: 160px; }
     editing = null;
     savePlans();
     renderPlan();
+    renderCalendarTab();
   }
 
-  function renderData() { renderQuick(); renderHint(); renderDay(); renderPlan(); renderCalendar(); renderHistory(); }
+  // ---------- settings ----------
+  var setMsg = null;                           // { area: "export" | "import", kind: "ok" | "err" | "note", text }
+  var importPreview = null, showPaste = false, exportText = null;
+
+  function backupJSON() {
+    return JSON.stringify({
+      app: "workout-log", version: 2, exportedAt: new Date().toISOString(),
+      days: days, plans: plans
+    });
+  }
+  function parseBackup(text) {
+    var o;
+    try { o = JSON.parse(String(text).trim()); } catch (e) { return null; }
+    if (!o || typeof o !== "object") return null;
+    var srcDays = o.days && typeof o.days === "object" && !Array.isArray(o.days) ? o.days : {};
+    var outDays = {};
+    Object.keys(srcDays).forEach(function (k) { var d = cleanDay(k, srcDays[k]); if (d) outDays[k] = d; });
+    var outPlans = (Array.isArray(o.plans) ? o.plans : []).map(cleanPlan).filter(function (p) { return p && p.items.length; });
+    if (!Object.keys(outDays).length && !outPlans.length) return null;
+    return { days: outDays, plans: outPlans };
+  }
+  function backupCounts(b) {
+    var nd = Object.keys(b.days).length, np = b.plans.length;
+    return { d: count(nd, "wdays"), p: count(np, "workouts") };
+  }
+  function importData(b) {
+    Object.keys(b.days).forEach(function (date) { days[date] = b.days[date]; dirty[date] = true; });
+    b.plans.forEach(function (p) {
+      var at = -1;
+      plans.forEach(function (x, i) { if (x.id === p.id) at = i; });
+      if (at >= 0) plans[at] = p; else plans.push(p);
+    });
+    if (b.plans.length) dirty.plans = true;
+    persistLocal();
+    Object.keys(dirty).forEach(flush);
+    pickedFor = null;
+    renderData();
+    renderStatus();
+  }
+  function msgEl(area) {
+    if (!setMsg || setMsg.area !== area) return null;
+    return el("div", setMsg.kind === "ok" ? "okmsg" : setMsg.kind === "err" ? "err" : "note", setMsg.text);
+  }
+  function settingsToggle(id, label, key) {
+    var lab = el("label", "sw"), cb = el("input");
+    cb.type = "checkbox"; cb.id = id; cb.checked = prefs[key];
+    cb.addEventListener("change", function () {
+      prefs[key] = cb.checked;
+      lsSet("wl-prefs", prefs);
+      renderData();
+    });
+    lab.htmlFor = id;
+    lab.appendChild(cb);
+    lab.appendChild(el("span", null, label));
+    return lab;
+  }
+  function renderSettings() {
+    var box = $("setView");
+    box.textContent = "";
+    var head = el("div", "sethead");
+    head.appendChild(el("div", "planname", t("set.title")));
+    head.appendChild(btn("ghost", t("set.back"), function () { showTab(tab); }));
+    box.appendChild(head);
+
+    // display
+    var c1 = el("div", "setcard");
+    c1.appendChild(el("h3", null, t("set.display")));
+    c1.appendChild(settingsToggle("prefProgress", t("set.showProgress"), "progress"));
+    c1.appendChild(settingsToggle("prefTotals", t("set.showTotals"), "totals"));
+    box.appendChild(c1);
+
+    // language
+    var c2 = el("div", "setcard");
+    c2.appendChild(el("h3", null, t("set.lang")));
+    var langs = el("div", "quick");
+    ["ru", "uk", "en"].forEach(function (l) {
+      var b = btn(null, LANG_NAMES[l], function () {
+        lsSet("wl-lang", l);
+        setLang(l);
+        renderAll();
+        renderRest();
+        timerLabels();
+        renderSettings();
+      });
+      b.setAttribute("aria-pressed", l === lang ? "true" : "false");
+      b.lang = l;
+      langs.appendChild(b);
+    });
+    c2.appendChild(langs);
+    box.appendChild(c2);
+
+    // backup
+    var c3 = el("div", "setcard");
+    c3.appendChild(el("h3", null, t("set.backup")));
+    c3.appendChild(el("div", "note", t("set.backupNote")));
+    var a3 = el("div", "actions");
+    a3.appendChild(btn("primary", t("set.export"), function () {
+      var name = "workout-log-backup-" + today() + ".json", data = backupJSON();
+      exportText = null;
+      saveFile(name, data).then(function (res) {
+        setMsg = { area: "export", kind: res === "saved" ? "ok" : "note", text: res === "saved" ? t("set.saved") : t("set.maybe") };
+        renderSettings();
+      }, function (e) {
+        if (e && e.code === "declined") { setMsg = null; renderSettings(); return; }
+        setMsg = { area: "export", kind: "err", text: t("set.saveFail") };
+        renderSettings();
+      });
+    }));
+    a3.appendChild(btn("ghost", t("set.copy"), function () {
+      var data = backupJSON();
+      var fail = function () {
+        exportText = data;
+        setMsg = { area: "export", kind: "note", text: t("set.copyFail") };
+        renderSettings();
+        var ta = $("exportText");
+        if (ta) { ta.focus(); ta.select(); }
+      };
+      try {
+        navigator.clipboard.writeText(data).then(function () {
+          exportText = null;
+          setMsg = { area: "export", kind: "ok", text: t("set.copied") };
+          renderSettings();
+        }, fail);
+      } catch (e) { fail(); }
+    }));
+    c3.appendChild(a3);
+    var m3 = msgEl("export");
+    if (m3) c3.appendChild(m3);
+    if (exportText) {
+      var ta = el("textarea", "backup-text");
+      ta.id = "exportText"; ta.readOnly = true; ta.value = exportText;
+      ta.setAttribute("aria-label", t("set.backup"));
+      c3.appendChild(ta);
+    }
+    box.appendChild(c3);
+
+    // restore
+    var c4 = el("div", "setcard");
+    c4.appendChild(el("h3", null, t("set.restore")));
+    var file = el("input", "vh");
+    file.type = "file"; file.id = "importFile"; file.accept = ".json,application/json,text/plain";
+    file.setAttribute("aria-label", t("set.import"));
+    file.addEventListener("change", function () {
+      var f = file.files && file.files[0];
+      if (!f) return;
+      var rd = new FileReader();
+      rd.onload = function () { previewImport(String(rd.result || "")); };
+      rd.onerror = function () { setMsg = { area: "import", kind: "err", text: t("set.bad") }; renderSettings(); };
+      rd.readAsText(f);
+    });
+    c4.appendChild(file);
+    var a4 = el("div", "actions");
+    a4.appendChild(btn("ghost", t("set.import"), function () { file.value = ""; file.click(); }));
+    a4.appendChild(btn("ghost", t("set.paste"), function () { showPaste = !showPaste; renderSettings(); var p = $("pasteText"); if (p) p.focus(); }));
+    c4.appendChild(a4);
+    if (showPaste) {
+      var pt = el("textarea", "backup-text");
+      pt.id = "pasteText"; pt.placeholder = t("set.pastePh");
+      pt.setAttribute("aria-label", t("set.pastePh"));
+      c4.appendChild(pt);
+      var a5 = el("div", "actions");
+      a5.appendChild(btn("ghost", t("set.check"), function () { previewImport(pt.value); }));
+      c4.appendChild(a5);
+    }
+    if (importPreview) {
+      var cnt = backupCounts(importPreview);
+      c4.appendChild(el("div", "note", t("set.preview", cnt)));
+      var a6 = el("div", "actions");
+      a6.appendChild(btn("primary", t("set.doImport"), function () {
+        var b = importPreview;
+        importPreview = null; showPaste = false;
+        importData(b);
+        setMsg = { area: "import", kind: "ok", text: t("set.imported", backupCounts(b)) };
+        renderSettings();
+      }));
+      a6.appendChild(btn("ghost", t("cancel"), function () { importPreview = null; setMsg = null; renderSettings(); }));
+      c4.appendChild(a6);
+    }
+    var m4 = msgEl("import");
+    if (m4) c4.appendChild(m4);
+    box.appendChild(c4);
+  }
+  function previewImport(text) {
+    var b = parseBackup(text);
+    if (!b) { importPreview = null; setMsg = { area: "import", kind: "err", text: t("set.bad") }; }
+    else { importPreview = b; setMsg = null; }
+    renderSettings();
+  }
+
+  // ---------- render all ----------
+  function renderData() {
+    renderQuick(); renderHint(); renderDay(); renderPlan(); renderCalendarTab();
+  }
   function renderAll() { renderDate(); renderData(); renderStatus(); }
 
   // ---------- actions ----------
@@ -1489,15 +2094,16 @@ body.timing .app { padding-bottom: 160px; }
     var cd = day(cur).exercises.filter(function (e) { return same(e.name, name); })[0];
     var src = cd && cd.sets.length ? cd.sets[cd.sets.length - 1] : null;
     if (!src) { var last = lastTime(name, cur); if (last) src = last.sets[0]; }
-    if (src) { $("weight").value = num(src.w).replace(/\s/g, ""); $("reps").value = String(src.r); }
+    if (src) { $("weight").value = dec(src.w); $("reps").value = String(src.r); }
     renderQuick(); renderHint();
   }
-  function addSet(name, w, r, when, restSec) {
+  function addSet(name, w, r, when, restSec, plan) {
     var date = when || cur;
     var d = days[date] || (days[date] = { date: date, exercises: [] });
     var ex = d.exercises.filter(function (e) { return same(e.name, name); })[0];
     if (!ex) { ex = { name: name, sets: [] }; d.exercises.push(ex); }
     ex.sets.push({ w: w, r: r });
+    if (plan) d.plan = { id: plan.id, name: plan.name };
     justAdded = { name: ex.name, index: ex.sets.length - 1 };
     haptic("tap");
     hideToast();
@@ -1512,15 +2118,16 @@ body.timing .app { padding-bottom: 160px; }
     var ex = d.exercises[ei], removed = ex.sets.splice(si, 1)[0];
     var exGone = !ex.sets.length;
     if (exGone) d.exercises.splice(ei, 1);
-    undoState = { date: date, name: ex.name, ei: ei, si: si, set: removed, exGone: exGone };
+    undoState = { date: date, name: ex.name, ei: ei, si: si, set: removed, exGone: exGone, plan: d.plan || null };
     touch(date);
     renderData();
-    showToast("Подход удалён: " + setText(removed));
+    showToast(t("toast.setDel", { s: setText(removed) }));
   }
   function undo() {
     var u = undoState;
     if (!u) return;
     var d = days[u.date] || (days[u.date] = { date: u.date, exercises: [] });
+    if (u.plan && !d.plan) d.plan = u.plan;
     var ex = d.exercises.filter(function (e) { return same(e.name, u.name); })[0];
     if (!ex) { ex = { name: u.name, sets: [] }; d.exercises.splice(Math.min(u.ei, d.exercises.length), 0, ex); }
     ex.sets.splice(Math.min(u.si, ex.sets.length), 0, u.set);
@@ -1552,8 +2159,7 @@ body.timing .app { padding-bottom: 160px; }
     if (!name) { $("nameErr").hidden = false; $("exName").classList.add("bad"); $("exName").focus(); return; }
     if (!(w >= 0) || w > 1000) { $("wBox").classList.add("bad"); $("weight").focus(); return; }
     if (!(r >= 1) || r > 1000) { $("rBox").classList.add("bad"); $("reps").focus(); return; }
-    w = Math.round(w * 100) / 100;
-    addSet(name, w, r);
+    addSet(name, Math.round(w * 100) / 100, r);
   });
   $("exName").addEventListener("input", function () { clearErrors(); renderQuick(); renderHint(); });
   document.querySelectorAll("[data-step]").forEach(function (b) {
@@ -1563,7 +2169,7 @@ body.timing .app { padding-bottom: 160px; }
       if (!isFinite(v)) v = 0;
       var min = input.id === "reps" ? 1 : 0;
       v = Math.max(min, Math.round((v + by) * 100) / 100);
-      input.value = String(v).replace(".", ",");
+      input.value = dec(v);
       clearErrors();
     });
   });
@@ -1588,15 +2194,19 @@ body.timing .app { padding-bottom: 160px; }
     tick();
   });
   $("tStop").addEventListener("click", stopRest);
-  renderRest();
+  $("gear").addEventListener("click", openSettings);
   TABS.forEach(function (k) {
     $("tabbtn-" + k).addEventListener("click", function () { showTab(k); });
   });
   $("planView").addEventListener("focusout", function () {
     if (planStale) setTimeout(renderPlan, 0);
   });
-  showTab(tab);
 
+  // ---------- boot ----------
+  setLang(lang);
+  $("weight").value = dec(20);
+  renderRest();
+  showTab(tab);
   renderAll();
   connect();
 })();
