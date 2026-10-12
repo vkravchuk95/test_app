@@ -402,6 +402,23 @@ body.timing .app { padding-bottom: 160px; }
 .pair.one { grid-template-columns: minmax(0, 1fr); }
 .timer.work { background: var(--accent); color: var(--accent-ink); }
 .timer.work .tfill { background: var(--accent-ink); opacity: .45; }
+
+/* Workouts (sessions) within a day */
+.session { display: flex; flex-direction: column; gap: 10px; }
+.session + .session { margin-top: 8px; padding-top: 16px; border-top: 1px dashed var(--line); }
+.seshead { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; padding: 0 2px; }
+.sesname { font-family: var(--display); font-weight: 500; font-size: 17px; min-width: 0; overflow-wrap: anywhere; }
+.sestime { font-size: 13px; color: var(--muted); }
+.session.live .sestime, .totals .sestime { color: var(--accent); }
+.finish { width: 100%; }
+.donelist { display: flex; flex-direction: column; gap: 4px; padding: 10px 14px; border-radius: 12px; background: var(--accent-soft); }
+.donelist .lbl { margin: 0; color: var(--accent); }
+.doneitem { font-size: 14px; color: var(--ink); }
+
+.confirmbox { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border: 1px solid var(--accent); border-radius: 12px; background: var(--accent-soft); font-size: 15px; }
+.confirmbox .actions .primary { height: 44px; }
+.sestime .linkbtn { font-size: 13px; }
+.doneitem .linkbtn { font-size: 14px; }
 </style>
 
 <div class="app">
@@ -580,6 +597,12 @@ body.timing .app { padding-bottom: 160px; }
   var LANG_NAMES = { ru: "Русский", uk: "Українська", en: "English" };
   var I18N = {
     ru: {
+      "ses.thatDay": "Сделано в этот день",
+      "ses.edit": "изменить", "ses.editAria": "Изменить тренировку: открыть её снова",
+      "ses.early": "Сделано {x} из {y} {sets}. Завершить тренировку сейчас?", "ses.yesFinish": "Да, завершить", "ses.keep": "Продолжить",
+      "ses.finish": "Завершить тренировку", "ses.running": "идёт с {t}", "ses.live": "идёт", "ses.doneAt": "завершена в {t}",
+      "ses.finished": "Тренировка завершена: {x}", "ses.del": "Удалить эту тренировку", "ses.delQ": "Удалить эту тренировку со всеми подходами?",
+      "ses.earlier": "Уже сделано сегодня",
       "type.w": "Вес", "type.bw": "Свой вес", "type.time": "Время", "type.cardio": "Кардио", "f.type": "Тип упражнения",
       "f.extra": "Доп. вес, кг", "log.extraNote": "0 — без доп. веса", "f.time": "Время подхода", "f.dur": "Время",
       "f.dist": "Дистанция, км", "log.durNote": "мин:сек, например 1:30", "log.tMinus": "Меньше", "log.tPlus": "Больше",
@@ -659,6 +682,12 @@ body.timing .app { padding-bottom: 160px; }
       "set.doImport": "Импортировать", "set.imported": "Готово: импортировано {d} и {p}."
     },
     uk: {
+      "ses.thatDay": "Зроблено цього дня",
+      "ses.edit": "змінити", "ses.editAria": "Змінити тренування: відкрити його знову",
+      "ses.early": "Зроблено {x} з {y} {sets}. Завершити тренування зараз?", "ses.yesFinish": "Так, завершити", "ses.keep": "Продовжити",
+      "ses.finish": "Завершити тренування", "ses.running": "триває з {t}", "ses.live": "триває", "ses.doneAt": "завершено о {t}",
+      "ses.finished": "Тренування завершено: {x}", "ses.del": "Видалити це тренування", "ses.delQ": "Видалити це тренування з усіма підходами?",
+      "ses.earlier": "Уже зроблено сьогодні",
       "type.w": "Вага", "type.bw": "Власна вага", "type.time": "Час", "type.cardio": "Кардіо", "f.type": "Тип вправи",
       "f.extra": "Дод. вага, кг", "log.extraNote": "0 — без додаткової ваги", "f.time": "Час підходу", "f.dur": "Час",
       "f.dist": "Дистанція, км", "log.durNote": "хв:сек, наприклад 1:30", "log.tMinus": "Менше", "log.tPlus": "Більше",
@@ -738,6 +767,12 @@ body.timing .app { padding-bottom: 160px; }
       "set.doImport": "Імпортувати", "set.imported": "Готово: імпортовано {d} і {p}."
     },
     en: {
+      "ses.thatDay": "Done that day",
+      "ses.edit": "edit", "ses.editAria": "Edit workout: open it again",
+      "ses.early": "{x} of {y} {sets} done. Finish the workout now?", "ses.yesFinish": "Yes, finish", "ses.keep": "Keep going",
+      "ses.finish": "Finish workout", "ses.running": "in progress since {t}", "ses.live": "in progress", "ses.doneAt": "finished at {t}",
+      "ses.finished": "Workout finished: {x}", "ses.del": "Delete this workout", "ses.delQ": "Delete this workout and all its sets?",
+      "ses.earlier": "Already done today",
       "type.w": "Weight", "type.bw": "Bodyweight", "type.time": "Time", "type.cardio": "Cardio", "f.type": "Exercise type",
       "f.extra": "Added weight, kg", "log.extraNote": "0 = no added weight", "f.time": "Time per set", "f.dur": "Duration",
       "f.dist": "Distance, km", "log.durNote": "min:sec, e.g. 1:30", "log.tMinus": "Less", "log.tPlus": "More",
@@ -947,11 +982,9 @@ body.timing .app { padding-bottom: 160px; }
       return { w: Math.round(w * 100) / 100, r: r };
     }).filter(Boolean);
   }
-  function cleanDay(date, raw) {
-    if (!DATE_RE.test(date) || !raw) return null;
-    var list = Array.isArray(raw) ? raw : raw.exercises;
-    if (!Array.isArray(list)) return null;
-    var ex = list.map(function (e) {
+  function cleanExercises(list) {
+    if (!Array.isArray(list)) return [];
+    return list.map(function (e) {
       if (!e || typeof e.name !== "string" || !e.name.trim()) return null;
       var type = typeOf(e), sets = cleanSets(e.sets, type);
       if (!sets.length) return null;
@@ -959,11 +992,48 @@ body.timing .app { padding-bottom: 160px; }
       if (type !== "w") out.type = type;
       return out;
     }).filter(Boolean);
-    if (!ex.length) return null;
-    var d = { date: date, exercises: ex };
-    var p = !Array.isArray(raw) && raw.plan;
-    if (p && typeof p.id === "string" && typeof p.name === "string") d.plan = { id: p.id.slice(0, 40), name: p.name.slice(0, 40) };
+  }
+  function cleanPlanRef(p) {
+    return p && typeof p.id === "string" && typeof p.name === "string" ? { id: p.id.slice(0, 40), name: p.name.slice(0, 40) } : null;
+  }
+  // A day holds one or more workouts ("sessions"); day.exercises is a read-only view across all of them.
+  function mkDay(date, sessions) {
+    var d = { date: date, sessions: sessions };
+    Object.defineProperty(d, "exercises", {
+      enumerable: false,
+      get: function () { var out = []; d.sessions.forEach(function (s) { out.push.apply(out, s.exercises); }); return out; }
+    });
     return d;
+  }
+  function cleanDay(date, raw) {
+    if (!DATE_RE.test(date) || !raw) return null;
+    var past = date < today(), sessions = [];
+    if (!Array.isArray(raw) && Array.isArray(raw.sessions)) {
+      raw.sessions.forEach(function (s, i) {
+        if (!s) return;
+        var ex = cleanExercises(s.exercises);
+        if (!ex.length) return;
+        var out = { id: typeof s.id === "string" && /^[A-Za-z0-9_-]{1,40}$/.test(s.id) ? s.id : "s" + i + newId(), exercises: ex };
+        var p = cleanPlanRef(s.plan);
+        if (p) out.plan = p;
+        if (+s.start > 0) out.start = +s.start;
+        if (+s.end > 0) out.end = +s.end;
+        if (s.done || past) out.done = true;
+        sessions.push(out);
+      });
+    } else {
+      // Older format: one flat list of exercises for the whole day.
+      var ex = cleanExercises(Array.isArray(raw) ? raw : raw.exercises);
+      if (ex.length) {
+        var s0 = { id: "s0", exercises: ex }, p0 = cleanPlanRef(raw.plan);
+        if (p0) s0.plan = p0;
+        if (past) s0.done = true;
+        sessions.push(s0);
+      }
+    }
+    var openSeen = false;                      // at most one workout stays open
+    sessions.forEach(function (s) { if (!s.done) { if (openSeen) s.done = true; openSeen = true; } });
+    return sessions.length ? mkDay(date, sessions) : null;
   }
   function cleanPlan(p) {
     if (!p || typeof p.name !== "string" || !Array.isArray(p.items)) return null;
@@ -1025,7 +1095,7 @@ body.timing .app { padding-bottom: 160px; }
     lsSet("wl-plans", plans);
     lsSet("wl-dirty", Object.keys(dirty));
   }
-  function day(date) { return days[date] || { date: date, exercises: [] }; }
+  function day(date) { return days[date] || mkDay(date, []); }
 
   // ==STORAGE-BEGIN== (Telegram Mini App: Telegram CloudStorage, one key per day "d_YYYY-MM-DD" and per plan "p_<id>")
   var ST = { on: "st.tg", off: "st.tgLocal", denied: "st.tgDenied" };
@@ -1055,8 +1125,8 @@ body.timing .app { padding-bottom: 160px; }
     }
     var d = days[key];
     if (d && d.exercises.length) {
-      // Days logged from My workout also remember which workout they belong to; older days stay a plain list.
-      var val = JSON.stringify(d.plan ? { e: d.exercises, p: d.plan } : d.exercises);
+      // Each day keeps its workouts (sessions); older days written as a plain list are still read.
+      var val = JSON.stringify({ s: d.sessions });
       if (val.length > 4096) return Promise.reject({ code: "quota_exceeded" });
       return csCall("setItem", ["d_" + key, val]);
     }
@@ -1095,6 +1165,7 @@ body.timing .app { padding-bottom: 160px; }
         try {
           var raw = JSON.parse(vals[k]);
           if (raw && !Array.isArray(raw) && Array.isArray(raw.e)) raw = { exercises: raw.e, plan: raw.p };
+          else if (raw && !Array.isArray(raw) && Array.isArray(raw.s)) raw = { sessions: raw.s };
           var d = cleanDay(k.slice(2), raw);
           if (d) next[d.date] = d;
         } catch (e) {}
@@ -1137,7 +1208,10 @@ body.timing .app { padding-bottom: 160px; }
   // ---------- saving ----------
   function touch(date) {
     var d = days[date];
-    if (d && !d.exercises.length) delete days[date];
+    if (d) {
+      d.sessions = d.sessions.filter(function (s) { return s.exercises.length; });
+      if (!d.sessions.length) delete days[date];
+    }
     dirty[date] = true;
     persistLocal();
     flush(date);
@@ -1211,22 +1285,44 @@ body.timing .app { padding-bottom: 160px; }
   }
   function planDays(p) { return Array.isArray(p.days) ? p.days : []; }
   function planById(id) { return plans.filter(function (p) { return p.id === id; })[0] || null; }
-  // Which of the user's workouts a day belongs to: the one recorded when sets were ticked in My workout,
-  // otherwise the workout that shares the most exercises with that day.
-  function planOfDay(date) {
-    var d = days[date];
-    if (!d) return null;
-    if (d.plan) {
-      var p = planById(d.plan.id);
-      return { id: d.plan.id, name: p ? p.name : d.plan.name, plan: p };
+  // ---------- workouts within a day ----------
+  function sessionById(d, sid) { return d ? d.sessions.filter(function (s) { return s.id === sid; })[0] || null : null; }
+  function openSession(d) { return d ? d.sessions.filter(function (s) { return !s.done; })[0] || null : null; }
+  function closeOpen(d) { var o = openSession(d); if (o) { o.done = true; o.end = Date.now(); } }
+  function sessionSets(s) { var n = 0; s.exercises.forEach(function (e) { n += e.sets.length; }); return n; }
+  function timeFmt(ms) { return new Intl.DateTimeFormat(LOCALES[lang], { hour: "2-digit", minute: "2-digit" }).format(new Date(ms)); }
+  function sessionTime(s) {
+    if (!s.done) return s.start ? t("ses.running", { t: timeFmt(s.start) }) : t("ses.live");
+    if (s.start && s.end) return timeFmt(s.start) + "–" + timeFmt(s.end);
+    if (s.end) return t("ses.doneAt", { t: timeFmt(s.end) });
+    return s.start ? timeFmt(s.start) : "";
+  }
+  // Which of the user's workouts a session belongs to: the one recorded when sets were ticked in My workout,
+  // otherwise the workout that shares the most exercises with it.
+  function planOfSession(s) {
+    if (!s) return null;
+    if (s.plan) {
+      var p = planById(s.plan.id);
+      return { id: s.plan.id, name: p ? p.name : s.plan.name, plan: p };
     }
     var best = null, bestN = 0;
     plans.forEach(function (p) {
-      var n = d.exercises.filter(function (e) { return p.items.some(function (it) { return same(it.name, e.name); }); }).length;
+      var n = s.exercises.filter(function (e) { return p.items.some(function (it) { return same(it.name, e.name); }); }).length;
       if (n > bestN) { bestN = n; best = p; }
     });
-    if (best && bestN > 0) return { id: best.id, name: best.name, plan: best };
-    return null;
+    return best ? { id: best.id, name: best.name, plan: best } : null;
+  }
+  // The workout session My workout shows for a plan on a date: the open one, or (on a past day) the last one done.
+  function viewSession(date, plan) {
+    var d = days[date];
+    if (!d) return null;
+    var open = openSession(d);
+    // An open free workout is continued only if everything in it belongs to this plan.
+    if (open && (open.plan ? open.plan.id === plan.id :
+      open.exercises.every(function (e) { return plan.items.some(function (it) { return same(it.name, e.name); }); }))) return open;
+    if (date === today()) return null;
+    var list = d.sessions.filter(function (s) { var po = planOfSession(s); return po && po.id === plan.id; });
+    return list[list.length - 1] || null;
   }
 
   // ---------- journal ----------
@@ -1278,48 +1374,59 @@ body.timing .app { padding-bottom: 160px; }
       tot.appendChild(el("b", null, num(tn.kg) + " " + t("kg")));
       tot.title = t("lifted.title");
     }
-    d.exercises.forEach(function (ex, ei) {
-      var card = el("div", "ex");
-      card.appendChild(el("div", "name", ex.name));
-      var type = typeOf(ex), kg = 0, secs = 0, km = 0;
-      ex.sets.forEach(function (s) { if (type === "w") kg += s.w * s.r; secs += s.t || 0; km += s.d || 0; });
-      var metaText = count(ex.sets.length, "sets");
-      if (type === "w" && prefs.totals && kg > 0) metaText += " · " + t("lifted.ex") + " " + num(kg) + " " + t("kg");
-      if (type === "time") metaText += " · " + t("type.time").toLowerCase() + " " + durText(secs);
-      if (type === "cardio") metaText = t("type.cardio") + " · " + durText(secs) + (km > 0 ? " · " + kmText(km) + " · " + paceText(secs, km) : "");
-      card.appendChild(el("div", "meta", metaText));
-      var row = el("div", "sets");
-      ex.sets.forEach(function (s, si) {
-        var chip = el("span", "set");
-        if (justAdded && same(justAdded.name, ex.name) && justAdded.index === si) chip.classList.add("new");
-        chip.appendChild(el("span", "n", String(si + 1)));
-        var v = el("span", "v");
-        if ((type === "w" || type === "bw") && s.w > 0) {
-          v.appendChild(txt((type === "bw" ? "+" : "") + num(s.w) + " "));
-          v.appendChild(el("small", null, t("kg")));
-          v.appendChild(txt(" × " + s.r));
-        } else {
-          v.textContent = setText(s, type);
-        }
-        chip.appendChild(v);
-        var del = btn("del", "×", function () { removeSet(ei, si); });
-        del.setAttribute("aria-label", t("del.setAria", { n: si + 1, s: setText(s, type) }));
-        chip.appendChild(del);
-        row.appendChild(chip);
+    d.sessions.forEach(function (s) {
+      var box = el("div", "session" + (s.done ? "" : " live"));
+      var head = el("div", "seshead"), po = planOfSession(s);
+      head.appendChild(el("div", "sesname", po ? po.name : t("cal.free")));
+      var tm = el("div", "sestime", sessionTime(s));
+      if (s.done && cur === today()) { tm.appendChild(txt(" · ")); tm.appendChild(editLink(cur, s)); }
+      head.appendChild(tm);
+      box.appendChild(head);
+      s.exercises.forEach(function (ex, ei) {
+        var card = el("div", "ex");
+        card.appendChild(el("div", "name", ex.name));
+        var type = typeOf(ex), kg = 0, secs = 0, km = 0;
+        ex.sets.forEach(function (x) { if (type === "w") kg += x.w * x.r; secs += x.t || 0; km += x.d || 0; });
+        var metaText = count(ex.sets.length, "sets");
+        if (type === "w" && prefs.totals && kg > 0) metaText += " · " + t("lifted.ex") + " " + num(kg) + " " + t("kg");
+        if (type === "time") metaText += " · " + t("type.time").toLowerCase() + " " + durText(secs);
+        if (type === "cardio") metaText = t("type.cardio") + " · " + durText(secs) + (km > 0 ? " · " + kmText(km) + " · " + paceText(secs, km) : "");
+        card.appendChild(el("div", "meta", metaText));
+        var row = el("div", "sets");
+        ex.sets.forEach(function (x, si) {
+          var chip = el("span", "set");
+          if (justAdded && justAdded.sid === s.id && same(justAdded.name, ex.name) && justAdded.index === si) chip.classList.add("new");
+          chip.appendChild(el("span", "n", String(si + 1)));
+          var v = el("span", "v");
+          if ((type === "w" || type === "bw") && x.w > 0) {
+            v.appendChild(txt((type === "bw" ? "+" : "") + num(x.w) + " "));
+            v.appendChild(el("small", null, t("kg")));
+            v.appendChild(txt(" × " + x.r));
+          } else {
+            v.textContent = setText(x, type);
+          }
+          chip.appendChild(v);
+          var del = btn("del", "×", function () { removeSet(s.id, ei, si); });
+          del.setAttribute("aria-label", t("del.setAria", { n: si + 1, s: setText(x, type) }));
+          chip.appendChild(del);
+          row.appendChild(chip);
+        });
+        var last = ex.sets[ex.sets.length - 1];
+        var more = btn("again", t("log.more", { s: setText(last, type) }), function () { addSet(ex.name, copySet(last), cur, undefined, null, type, s.id); });
+        more.setAttribute("aria-label", t("log.moreAria", { s: setText(last, type) }));
+        row.appendChild(more);
+        card.appendChild(row);
+        card.appendChild(confirmRow("ex:" + s.id + ":" + ei, t("del.ex"), t("del.exQ", { n: ex.name }), function () {
+          s.exercises.splice(ei, 1);
+        }));
+        box.appendChild(card);
       });
-      var last = ex.sets[ex.sets.length - 1];
-      var more = btn("again", t("log.more", { s: setText(last, type) }), function () { addSet(ex.name, copySet(last), cur, undefined, null, type); });
-      more.setAttribute("aria-label", t("log.moreAria", { s: setText(last, type) }));
-      row.appendChild(more);
-      card.appendChild(row);
-      card.appendChild(confirmRow("ex:" + ei, t("del.ex"), t("del.exQ", { n: ex.name }), function () {
-        d.exercises.splice(ei, 1);
+      if (!s.done) box.appendChild(finishBlock(cur, s));
+      box.appendChild(confirmRow("ses:" + s.id, t("ses.del"), t("ses.delQ"), function () {
+        d.sessions = d.sessions.filter(function (x) { return x !== s; });
       }));
-      list.appendChild(card);
+      list.appendChild(box);
     });
-    list.appendChild(confirmRow("day", t("del.day"), t("del.dayQ"), function () {
-      d.exercises.length = 0;
-    }));
     justAdded = null;
   }
   var delAsk = null;
@@ -1373,10 +1480,13 @@ body.timing .app { padding-bottom: 160px; }
   function renderHistory() {
     var list = $("histList");
     list.textContent = "";
-    var dates = Object.keys(days).filter(function (d) { return days[d].exercises.length; }).sort().reverse();
-    $("histSec").hidden = !dates.length;
-    dates.slice(0, histShown).forEach(function (d) {
-      var po = planOfDay(d);
+    var rows = [];
+    Object.keys(days).sort().reverse().forEach(function (d) {
+      days[d].sessions.slice().reverse().forEach(function (s) { if (s.exercises.length) rows.push({ date: d, s: s }); });
+    });
+    $("histSec").hidden = !rows.length;
+    rows.slice(0, histShown).forEach(function (r) {
+      var d = r.date, s = r.s, po = planOfSession(s);
       var b = btn("past" + (d === cur ? " sel" : ""), null, function () {
         go(d);
         if (po && po.plan) {
@@ -1388,13 +1498,14 @@ body.timing .app { padding-bottom: 160px; }
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
       var dd = el("span", "d", fmt(d, { day: "numeric", month: "short" }));
-      dd.appendChild(el("small", null, fmt(d, { weekday: "short" }) + (d.slice(0, 4) !== today().slice(0, 4) ? " " + d.slice(0, 4) : "")));
+      dd.appendChild(el("small", null, fmt(d, { weekday: "short" }) + (d.slice(0, 4) !== today().slice(0, 4) ? " " + d.slice(0, 4) : "") +
+        (s.start ? " · " + timeFmt(s.start) : "")));
       b.appendChild(dd);
-      b.appendChild(el("span", "what", po ? po.name : days[d].exercises.map(function (e) { return e.name; }).join(", ")));
-      b.appendChild(el("span", "cnt", count(tonnage(days[d]).sets, "sets")));
+      b.appendChild(el("span", "what", po ? po.name : s.exercises.map(function (e) { return e.name; }).join(", ")));
+      b.appendChild(el("span", "cnt", count(sessionSets(s), "sets")));
       list.appendChild(b);
     });
-    if (dates.length > histShown) {
+    if (rows.length > histShown) {
       list.appendChild(btn("linkbtn more", t("hist.more"), function () { histShown += HIST_PAGE; renderHistory(); }));
     }
   }
@@ -1577,8 +1688,9 @@ body.timing .app { padding-bottom: 160px; }
   var histOpen = {};
   var pickedFor = null;
 
-  function doneSets(name) {
-    var ex = day(cur).exercises.filter(function (e) { return same(e.name, name); })[0];
+  function doneSets(plan, name) {
+    var s = viewSession(cur, plan);
+    var ex = s ? s.exercises.filter(function (e) { return same(e.name, name); })[0] : null;
     return ex ? ex.sets : [];
   }
   function restOf(it) { return it.rest == null ? 90 : it.rest; }
@@ -1595,14 +1707,11 @@ body.timing .app { padding-bottom: 160px; }
   function pickPlanForDay() {
     if (pickedFor === cur || !plans.length) return;
     pickedFor = cur;
-    var po = planOfDay(cur);
-    var best = po && po.plan ? po.plan : null;
-    if (!best) {
-      var logged = day(cur).exercises, bestN = 0;
-      plans.forEach(function (p) {
-        var n = p.items.filter(function (it) { return logged.some(function (e) { return same(e.name, it.name) && e.sets.length; }); }).length;
-        if (n > bestN) { bestN = n; best = p; }
-      });
+    var d = days[cur], best = null;
+    if (d) {
+      var s = openSession(d) || (cur !== today() ? d.sessions[d.sessions.length - 1] : null);
+      var po = planOfSession(s);
+      best = po && po.plan ? po.plan : null;
     }
     planSel = best ? best.id : null;
   }
@@ -1702,11 +1811,11 @@ body.timing .app { padding-bottom: 160px; }
     if (type === "bw") wrap.appendChild(el("div", "hint", t("log.extraNote")));
     return wrap;
   }
-  function removeOnDay(name, k) {
-    var d = days[cur], ei = -1;
-    if (!d) return;
-    d.exercises.forEach(function (e, i) { if (same(e.name, name)) ei = i; });
-    if (ei >= 0) removeSet(ei, k, cur);
+  function removeOnDay(plan, name, k) {
+    var s = viewSession(cur, plan), ei = -1;
+    if (!s) return;
+    s.exercises.forEach(function (e, i) { if (same(e.name, name)) ei = i; });
+    if (ei >= 0) removeSet(s.id, ei, k, cur);
   }
   function miniInput(id, value, mode, aria, onInput) {
     var i = el("input", "mini");
@@ -1759,7 +1868,7 @@ body.timing .app { padding-bottom: 160px; }
     row.appendChild(el("span", "num", String(k + 1)));
     if (k < n) {
       row.appendChild(el("span", "val", kgText(sets[k], type)));
-      var on = btn("chk on", "✓", function () { removeOnDay(it.name, k); });
+      var on = btn("chk on", "✓", function () { removeOnDay(plan, it.name, k); });
       on.setAttribute("aria-label", t("plan.untickAria", { k: k + 1 }));
       row.appendChild(on);
     } else if (k === n) {
@@ -1846,8 +1955,11 @@ body.timing .app { padding-bottom: 160px; }
   function sessionsOf(name) {
     var out = [];
     Object.keys(days).sort().forEach(function (d) {
-      var ex = days[d].exercises.filter(function (e) { return same(e.name, name); })[0];
-      if (!ex || !ex.sets.length) return;
+      // All sets of this exercise that day, across every workout.
+      var exs = days[d].exercises.filter(function (e) { return same(e.name, name); });
+      if (!exs.length) return;
+      var ex = { type: exs[0].type, sets: [] };
+      exs.forEach(function (e) { ex.sets = ex.sets.concat(e.sets); });
       var top = 0, reps = 0, tmax = 0, ttot = 0, dist = 0;
       ex.sets.forEach(function (x) {
         if (x.w > top) top = x.w;
@@ -2002,6 +2114,22 @@ body.timing .app { padding-bottom: 160px; }
     return box;
   }
 
+  // Every finished workout of the selected day, shown at the top of My workout without picking a plan.
+  function doneList() {
+    var fin = day(cur).sessions.filter(function (s) { return s.done && s.exercises.length; });
+    if (!fin.length) return null;
+    var fb = el("div", "donelist");
+    fb.appendChild(el("div", "lbl", cur === today() ? t("ses.earlier") : t("ses.thatDay")));
+    fin.forEach(function (s) {
+      var po = planOfSession(s), line = el("div", "doneitem");
+      var text = "✓ " + [po ? po.name : t("cal.free"), sessionTime(s), count(sessionSets(s), "sets")].filter(Boolean).join(" · ");
+      line.appendChild(el("span", null, text));
+      if (cur === today()) { line.appendChild(txt(" · ")); line.appendChild(editLink(cur, s)); }
+      fb.appendChild(line);
+    });
+    return fb;
+  }
+
   function renderPlan(force) {
     pickPlanForDay();
     if (editing) return;
@@ -2009,6 +2137,8 @@ body.timing .app { padding-bottom: 160px; }
     if (!force && a && (a.tagName === "INPUT" || a.tagName === "SELECT") && box.contains(a)) { planStale = true; return; }
     planStale = false;
     box.textContent = "";
+    var dl = doneList();
+    if (dl) box.appendChild(dl);
 
     if (!plans.length) {
       box.appendChild(el("div", "empty", t("plan.empty")));
@@ -2052,12 +2182,14 @@ body.timing .app { padding-bottom: 160px; }
     head.appendChild(btn("ghost", t("plan.edit"), function () { startEdit(plan); }));
     box.appendChild(head);
 
+    var vs = viewSession(cur, plan);
     var total = 0, done = 0;
-    plan.items.forEach(function (it) { total += it.sets; done += Math.min(it.sets, doneSets(it.name).length); });
+    plan.items.forEach(function (it) { total += it.sets; done += Math.min(it.sets, doneSets(plan, it.name).length); });
     var prog = el("div"), tl = el("div", "totals");
     tl.appendChild(txt(t("plan.progPre", { d: cur === today() ? t("date.today") : fmt(cur, { day: "numeric", month: "long" }) })));
     tl.appendChild(el("b", null, t("plan.of", { x: num(done), y: num(total) })));
     tl.appendChild(txt(t("plan.progSuf", { sets: tp("setsOf", total) }) + (total && done >= total ? t("plan.finished") : "")));
+    if (vs && sessionTime(vs)) tl.appendChild(el("span", "sestime", " · " + sessionTime(vs)));
     prog.appendChild(tl);
     var bar = el("div", "bar"), fill = el("i");
     bar.style.marginTop = "8px";
@@ -2069,7 +2201,7 @@ body.timing .app { padding-bottom: 160px; }
     var list = el("div", "list");
     plan.items.forEach(function (it, i) {
       if (itemEdit && itemEdit.planId === plan.id && itemEdit.index === i) { list.appendChild(itemEditor(plan)); return; }
-      var sets = doneSets(it.name), n = sets.length, complete = n >= it.sets, restSec = restOf(it);
+      var sets = doneSets(plan, it.name), n = sets.length, complete = n >= it.sets, restSec = restOf(it);
       var card = el("div", "ex" + (complete ? " done" : ""));
       var h = el("div", "exhead");
       h.appendChild(el("div", "name", it.name));
@@ -2109,6 +2241,9 @@ body.timing .app { padding-bottom: 160px; }
     });
     if (itemEdit && itemEdit.planId === plan.id && itemEdit.index === -1) list.appendChild(itemEditor(plan));
     box.appendChild(list);
+    if (vs && !vs.done) {
+      box.appendChild(finishBlock(cur, vs));
+    }
     if (!itemEdit) box.appendChild(btn("again", t("plan.addEx"), function () { openItemEdit(plan, -1); }));
     box.appendChild(el("div", "hint", t("plan.hint") +
       (plan.items.some(function (it) { return typeOf(it) === "time"; }) ? " " + t("plan.hintTime") : "")));
@@ -2427,6 +2562,7 @@ body.timing .app { padding-bottom: 160px; }
     if (date > today()) return;
     cur = date;
     delAsk = null;
+    finishAsk = null;
     itemEdit = null;
     drafts = {};
     calMonth = date.slice(0, 7);
@@ -2494,46 +2630,135 @@ body.timing .app { padding-bottom: 160px; }
     }
     renderQuick(); renderHint();
   }
-  function addSet(name, set, when, restSec, plan, type) {
-    var date = when || cur;
+  // Adds a set to the right workout of the day: the one given, the open one, or a new one.
+  function addSet(name, set, when, restSec, plan, type, sid) {
+    var date = when || cur, isToday = date === today();
     type = TYPES.indexOf(type) >= 0 ? type : "w";
-    var d = days[date] || (days[date] = { date: date, exercises: [] });
-    var ex = d.exercises.filter(function (e) { return same(e.name, name) && compatible(typeOf(e), type); })[0];
-    if (!ex) { ex = { name: name, sets: [] }; d.exercises.push(ex); }
+    var d = days[date] || (days[date] = mkDay(date, []));
+    var s = sid ? sessionById(d, sid) : null;
+    if (!s && plan) s = viewSession(date, plan);
+    if (!s && !plan) s = isToday ? openSession(d) : d.sessions[d.sessions.length - 1] || null;
+    if (!s) {
+      if (isToday) closeOpen(d);               // starting another workout ends the one still open
+      s = { id: "s" + newId(), exercises: [] };
+      if (isToday) s.start = Date.now(); else s.done = true;
+      d.sessions.push(s);
+    }
+    if (plan) s.plan = { id: plan.id, name: plan.name };
+    var ex = s.exercises.filter(function (e) { return same(e.name, name) && compatible(typeOf(e), type); })[0];
+    if (!ex) { ex = { name: name, sets: [] }; s.exercises.push(ex); }
     if (type === "w") delete ex.type; else ex.type = type;
     ex.sets.push(set);
-    if (plan) d.plan = { id: plan.id, name: plan.name };
-    justAdded = { name: ex.name, index: ex.sets.length - 1 };
+    justAdded = { sid: s.id, name: ex.name, index: ex.sets.length - 1 };
     haptic("tap");
     hideToast();
     touch(date);
     renderData();
-    if (date === today() && type !== "cardio") startRest(restSec);
+    if (isToday && !s.done && type !== "cardio") startRest(restSec);
   }
-  function removeSet(ei, si, when) {
-    var date = when || cur;
-    var d = days[date];
-    if (!d || !d.exercises[ei]) return;
-    var ex = d.exercises[ei], removed = ex.sets.splice(si, 1)[0];
+  function sessionMeta(s) {
+    var m = { id: s.id };
+    ["plan", "start", "end", "done"].forEach(function (k) { if (s[k] != null) m[k] = s[k]; });
+    return m;
+  }
+  function removeSet(sid, ei, si, when) {
+    var date = when || cur, d = days[date], s = sessionById(d, sid);
+    if (!s || !s.exercises[ei]) return;
+    var ex = s.exercises[ei], removed = ex.sets.splice(si, 1)[0];
     var exGone = !ex.sets.length;
-    if (exGone) d.exercises.splice(ei, 1);
-    undoState = { date: date, name: ex.name, type: typeOf(ex), ei: ei, si: si, set: removed, exGone: exGone, plan: d.plan || null };
+    if (exGone) s.exercises.splice(ei, 1);
+    undoState = { kind: "set", date: date, ses: sessionMeta(s), name: ex.name, type: typeOf(ex), ei: ei, si: si, set: removed };
     touch(date);
     renderData();
     showToast(t("toast.setDel", { s: setText(removed, typeOf(ex)) }));
   }
+  var finishAsk = null;                       // workout waiting for "finish early?" confirmation
+  // Planned sets done vs planned in a workout, or null for a free workout.
+  function sessionProgress(s) {
+    var po = planOfSession(s);
+    if (!po || !po.plan) return null;
+    var total = 0, done = 0;
+    po.plan.items.forEach(function (it) {
+      total += it.sets;
+      var ex = s.exercises.filter(function (e) { return same(e.name, it.name); })[0];
+      done += Math.min(it.sets, ex ? ex.sets.length : 0);
+    });
+    return { done: done, total: total };
+  }
+  function askFinish(date, sid) {
+    var s = sessionById(days[date], sid), pr = s && sessionProgress(s);
+    if (pr && pr.done < pr.total) { finishAsk = sid; renderData(); return; }
+    finishSession(date, sid);
+  }
+  function finishBlock(date, s) {
+    if (finishAsk !== s.id) return btn("primary finish", t("ses.finish"), function () { askFinish(date, s.id); });
+    var pr = sessionProgress(s) || { done: 0, total: 0 };
+    var box = el("div", "confirmbox");
+    box.appendChild(el("div", null, t("ses.early", { x: num(pr.done), y: num(pr.total), sets: tp("setsOf", pr.total) })));
+    var act = el("div", "actions");
+    act.appendChild(btn("primary", t("ses.yesFinish"), function () { finishSession(date, s.id); }));
+    act.appendChild(btn("ghost", t("ses.keep"), function () { finishAsk = null; renderData(); }));
+    box.appendChild(act);
+    return box;
+  }
+  // Reopen a finished workout (for example after tapping Finish by mistake).
+  function reopenSession(date, sid) {
+    var d = days[date], s = sessionById(d, sid);
+    if (!s || !s.done) return;
+    var other = openSession(d);
+    if (other && other !== s) { other.done = true; other.end = other.end || Date.now(); }
+    s.done = false;
+    delete s.end;
+    var po = planOfSession(s);
+    if (po && po.plan) planSel = po.plan.id;
+    hideToast();
+    touch(date);
+    renderData();
+  }
+  function editLink(date, s) {
+    var b = btn("linkbtn", t("ses.edit"), function () { reopenSession(date, s.id); });
+    b.setAttribute("aria-label", t("ses.editAria"));
+    return b;
+  }
+  function finishSession(date, sid) {
+    finishAsk = null;
+    var d = days[date], s = sessionById(d, sid);
+    if (!s || s.done) return;
+    s.done = true;
+    s.end = Date.now();
+    stopRest();
+    touch(date);
+    renderData();
+    undoState = { kind: "finish", date: date, sid: sid };
+    showToast(t("ses.finished", { x: count(sessionSets(s), "sets") }));
+  }
   function undo() {
     var u = undoState;
     if (!u) return;
-    var d = days[u.date] || (days[u.date] = { date: u.date, exercises: [] });
-    if (u.plan && !d.plan) d.plan = u.plan;
-    var ex = d.exercises.filter(function (e) { return same(e.name, u.name) && compatible(typeOf(e), u.type); })[0];
-    if (!ex) {
-      ex = { name: u.name, sets: [] };
-      if (u.type !== "w") ex.type = u.type;
-      d.exercises.splice(Math.min(u.ei, d.exercises.length), 0, ex);
+    var d = days[u.date] || (days[u.date] = mkDay(u.date, []));
+    if (u.kind === "finish") {
+      var f = sessionById(d, u.sid);
+      if (f) {
+        var other = openSession(d);
+        if (other && other !== f) { other.done = true; other.end = other.end || Date.now(); }
+        f.done = false; delete f.end;
+      }
+    } else {
+      var s = sessionById(d, u.ses.id);
+      if (!s) {
+        s = JSON.parse(JSON.stringify(u.ses));
+        s.exercises = [];
+        d.sessions.push(s);
+        d.sessions.sort(function (a, b) { return (a.start || 0) - (b.start || 0); });
+      }
+      var ex = s.exercises.filter(function (e) { return same(e.name, u.name) && compatible(typeOf(e), u.type); })[0];
+      if (!ex) {
+        ex = { name: u.name, sets: [] };
+        if (u.type !== "w") ex.type = u.type;
+        s.exercises.splice(Math.min(u.ei, s.exercises.length), 0, ex);
+      }
+      ex.sets.splice(Math.min(u.si, ex.sets.length), 0, u.set);
     }
-    ex.sets.splice(Math.min(u.si, ex.sets.length), 0, u.set);
     hideToast();
     touch(u.date);
     renderData();
