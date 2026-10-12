@@ -384,6 +384,10 @@ body.timing .app { padding-bottom: 160px; }
 .calday .hrow { grid-template-columns: minmax(0, 40%) minmax(0, 1fr); }
 .calday .hrow .d { color: var(--ink); font-weight: 500; overflow-wrap: anywhere; }
 .past.sel { border-color: var(--accent); }
+
+/* Tabs stay inside the screen at large interface sizes */
+.tabs button { flex: 1 1 0; min-width: 0; white-space: normal; line-height: 1.15; height: auto; min-height: 40px; padding: 6px 4px; font-size: 13.5px; hyphens: auto; }
+.setcard .sw span { min-width: 0; }
 </style>
 
 <div class="app">
@@ -596,6 +600,8 @@ body.timing .app { padding-bottom: 160px; }
       "set.title": "Настройки", "set.back": "← Назад", "set.display": "Что показывать",
       "set.showProgress": "Кнопка «прогресс» в «Моей тренировке»", "set.showTotals": "«Всего поднято» (вес × повторения)",
       "set.lang": "Язык", "set.backup": "Резервная копия",
+      "set.size": "Размер интерфейса", "set.size0": "Мелкий", "set.size1": "Обычный", "set.size2": "Крупный", "set.size3": "Очень крупный",
+      "plan.choose": "Выберите тренировку выше — она развернётся.",
       "set.backupNote": "Файл со всеми тренировками и планами. Сохраните его, чтобы потом восстановить записи или перенести их на другой аккаунт.",
       "set.export": "Скачать резервную копию", "set.copy": "Скопировать как текст",
       "set.copied": "Скопировано. Вставьте текст в надёжное место, например в «Избранное» в Telegram.",
@@ -661,6 +667,8 @@ body.timing .app { padding-bottom: 160px; }
       "set.title": "Налаштування", "set.back": "← Назад", "set.display": "Що показувати",
       "set.showProgress": "Кнопка «прогрес» у «Моєму тренуванні»", "set.showTotals": "«Усього піднято» (вага × повторення)",
       "set.lang": "Мова", "set.backup": "Резервна копія",
+      "set.size": "Розмір інтерфейсу", "set.size0": "Дрібний", "set.size1": "Звичайний", "set.size2": "Великий", "set.size3": "Дуже великий",
+      "plan.choose": "Оберіть тренування вище — воно розгорнеться.",
       "set.backupNote": "Файл з усіма тренуваннями та планами. Збережіть його, щоб потім відновити записи або перенести їх на інший акаунт.",
       "set.export": "Завантажити резервну копію", "set.copy": "Скопіювати як текст",
       "set.copied": "Скопійовано. Вставте текст у надійне місце, наприклад у «Збережене» в Telegram.",
@@ -726,6 +734,8 @@ body.timing .app { padding-bottom: 160px; }
       "set.title": "Settings", "set.back": "← Back", "set.display": "Display",
       "set.showProgress": "“Progress” link in My workout", "set.showTotals": "“Total lifted” (weight × reps)",
       "set.lang": "Language", "set.backup": "Backup",
+      "set.size": "Interface size", "set.size0": "Small", "set.size1": "Normal", "set.size2": "Large", "set.size3": "Extra large",
+      "plan.choose": "Pick a workout above to open it.",
       "set.backupNote": "A file with all your workouts and plans. Keep it to restore your entries later or move them to another account.",
       "set.export": "Download backup", "set.copy": "Copy as text",
       "set.copied": "Copied. Paste it somewhere safe, for example Saved Messages in Telegram.",
@@ -879,7 +889,15 @@ body.timing .app { padding-bottom: 160px; }
   var dirty = {};                              // keys changed here and not yet confirmed by the cloud
   (lsGet("wl-dirty", []) || []).forEach(function (d) { dirty[d] = true; });
   var prefs = lsGet("wl-prefs", null) || {};
-  prefs = { progress: prefs.progress !== false, totals: prefs.totals !== false };
+  var SIZES = [0.9, 1, 1.12, 1.25];
+  prefs = { progress: prefs.progress !== false, totals: prefs.totals !== false,
+    size: SIZES.indexOf(prefs.size) >= 0 ? prefs.size : 1 };
+  function applySize() {
+    document.body.style.zoom = prefs.size === 1 ? "" : String(prefs.size);
+    // The tab bar grows at most to the "Large" step so its three labels still fit on narrow phones.
+    var tabs = document.getElementById("tabs");
+    if (tabs) tabs.style.zoom = prefs.size > 1.12 ? String(Math.round(1.12 / prefs.size * 1000) / 1000) : "";
+  }
   var cur = today();
   var histShown = HIST_PAGE;
   var justAdded = null;
@@ -1417,8 +1435,7 @@ body.timing .app { padding-bottom: 160px; }
         if (n > bestN) { bestN = n; best = p; }
       });
     }
-    if (!best) best = plans.filter(function (x) { return planDays(x).indexOf(curDow()) >= 0; })[0];
-    if (best) planSel = best.id;
+    planSel = best ? best.id : null;
   }
   function draftOf(it) {
     return { name: it.name, sets: String(it.sets), reps: String(it.reps), w: dec(it.w), rest: restOf(it) };
@@ -1700,18 +1717,27 @@ body.timing .app { padding-bottom: 160px; }
       box.appendChild(btn("primary", t("plan.create"), function () { startEdit(null); }));
       return;
     }
-    var plan = planById(planSel) || plans[0];
-    planSel = plan.id;
+    var plan = planById(planSel);
+    if (!plan) planSel = null;
 
     var pickRow = el("div", "quick");
     plans.forEach(function (p) {
-      var b = btn(null, p.name, function () { planSel = p.id; itemEdit = null; lsSet("wl-plan-sel", planSel); renderPlan(true); });
-      b.setAttribute("aria-pressed", p.id === plan.id ? "true" : "false");
+      var b = btn(null, p.name, function () {
+        planSel = planSel === p.id ? null : p.id;   // tapping the open workout again folds it
+        itemEdit = null;
+        renderPlan(true);
+      });
+      b.setAttribute("aria-pressed", plan && p.id === plan.id ? "true" : "false");
+      b.setAttribute("aria-expanded", plan && p.id === plan.id ? "true" : "false");
       if (planDays(p).length) b.appendChild(el("small", null, planDays(p).map(function (d) { return dow()[d]; }).join(", ")));
       pickRow.appendChild(b);
     });
     pickRow.appendChild(btn(null, t("plan.new"), function () { startEdit(null); }));
     box.appendChild(pickRow);
+    if (!plan) {
+      box.appendChild(el("div", "empty", t("plan.choose")));
+      return;
+    }
 
     var head = el("div", "planhead"), title = el("div", "plantitle");
     title.appendChild(el("div", "planname", plan.name));
@@ -1974,6 +2000,24 @@ body.timing .app { padding-bottom: 160px; }
     c2.appendChild(langs);
     box.appendChild(c2);
 
+    // interface size
+    var cs = el("div", "setcard");
+    cs.appendChild(el("h3", null, t("set.size")));
+    var sizes = el("div", "quick");
+    SIZES.forEach(function (z, i) {
+      var b = btn(null, t("set.size" + i), function () {
+        prefs.size = z;
+        lsSet("wl-prefs", prefs);
+        applySize();
+        renderSettings();
+      });
+      b.setAttribute("aria-pressed", z === prefs.size ? "true" : "false");
+      b.style.fontSize = Math.round(14 * z) + "px";
+      sizes.appendChild(b);
+    });
+    cs.appendChild(sizes);
+    box.appendChild(cs);
+
     // backup
     var c3 = el("div", "setcard");
     c3.appendChild(el("h3", null, t("set.backup")));
@@ -2204,6 +2248,7 @@ body.timing .app { padding-bottom: 160px; }
 
   // ---------- boot ----------
   setLang(lang);
+  applySize();
   $("weight").value = dec(20);
   renderRest();
   showTab(tab);
