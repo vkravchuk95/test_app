@@ -419,6 +419,17 @@ body.timing .app { padding-bottom: 160px; }
 .confirmbox .actions .primary { height: 44px; }
 .sestime .linkbtn { font-size: 13px; }
 .doneitem .linkbtn { font-size: 14px; }
+
+.session.free .sesname { color: var(--muted); }
+.session.free .ex { border-style: dashed; }
+
+.doneitem.extra summary { cursor: pointer; list-style: none; }
+.doneitem.extra summary::-webkit-details-marker { display: none; }
+.doneitem.extra summary::after { content: " ▾"; color: var(--accent); }
+.doneitem.extra[open] summary::after { content: " ▴"; }
+.extralist { margin: 6px 0 2px 18px; }
+.extralist .hrow { grid-template-columns: minmax(0, 45%) minmax(0, 1fr); padding: 3px 0; }
+.extralist .hrow .d { color: var(--ink); font-weight: 500; overflow-wrap: anywhere; }
 </style>
 
 <div class="app">
@@ -451,6 +462,7 @@ body.timing .app { padding-bottom: 160px; }
   </div>
 
   <div class="panel" id="tab-log">
+  <div id="logDone"></div>
   <form class="entry" id="form" novalidate autocomplete="off">
     <div>
       <label for="exName" data-i="log.exercise">Упражнение</label>
@@ -597,6 +609,8 @@ body.timing .app { padding-bottom: 160px; }
   var LANG_NAMES = { ru: "Русский", uk: "Українська", en: "English" };
   var I18N = {
     ru: {
+      "ses.extra1": "Дополнительное упражнение", "ses.extraN": "Дополнительные упражнения",
+      "ses.journal": "Добавлено в журнале",
       "ses.thatDay": "Сделано в этот день",
       "ses.edit": "изменить", "ses.editAria": "Изменить тренировку: открыть её снова",
       "ses.early": "Сделано {x} из {y} {sets}. Завершить тренировку сейчас?", "ses.yesFinish": "Да, завершить", "ses.keep": "Продолжить",
@@ -682,6 +696,8 @@ body.timing .app { padding-bottom: 160px; }
       "set.doImport": "Импортировать", "set.imported": "Готово: импортировано {d} и {p}."
     },
     uk: {
+      "ses.extra1": "Додаткова вправа", "ses.extraN": "Додаткові вправи",
+      "ses.journal": "Додано в журналі",
       "ses.thatDay": "Зроблено цього дня",
       "ses.edit": "змінити", "ses.editAria": "Змінити тренування: відкрити його знову",
       "ses.early": "Зроблено {x} з {y} {sets}. Завершити тренування зараз?", "ses.yesFinish": "Так, завершити", "ses.keep": "Продовжити",
@@ -767,6 +783,8 @@ body.timing .app { padding-bottom: 160px; }
       "set.doImport": "Імпортувати", "set.imported": "Готово: імпортовано {d} і {p}."
     },
     en: {
+      "ses.extra1": "Extra exercise", "ses.extraN": "Extra exercises",
+      "ses.journal": "Added in the Log",
       "ses.thatDay": "Done that day",
       "ses.edit": "edit", "ses.editAria": "Edit workout: open it again",
       "ses.early": "{x} of {y} {sets} done. Finish the workout now?", "ses.yesFinish": "Yes, finish", "ses.keep": "Keep going",
@@ -1018,6 +1036,7 @@ body.timing .app { padding-bottom: 160px; }
         if (p) out.plan = p;
         if (+s.start > 0) out.start = +s.start;
         if (+s.end > 0) out.end = +s.end;
+        if (s.free) out.free = true;
         if (s.done || past) out.done = true;
         sessions.push(out);
       });
@@ -1032,7 +1051,7 @@ body.timing .app { padding-bottom: 160px; }
       }
     }
     var openSeen = false;                      // at most one workout stays open
-    sessions.forEach(function (s) { if (!s.done) { if (openSeen) s.done = true; openSeen = true; } });
+    sessions.forEach(function (s) { if (!s.done && !s.free) { if (openSeen) s.done = true; openSeen = true; } });
     return sessions.length ? mkDay(date, sessions) : null;
   }
   function cleanPlan(p) {
@@ -1287,11 +1306,15 @@ body.timing .app { padding-bottom: 160px; }
   function planById(id) { return plans.filter(function (p) { return p.id === id; })[0] || null; }
   // ---------- workouts within a day ----------
   function sessionById(d, sid) { return d ? d.sessions.filter(function (s) { return s.id === sid; })[0] || null : null; }
-  function openSession(d) { return d ? d.sessions.filter(function (s) { return !s.done; })[0] || null : null; }
+  // The workout in progress (sets added in the Log live in a separate "free" block and never count as one).
+  function openSession(d) { return d ? d.sessions.filter(function (s) { return !s.done && !s.free; })[0] || null : null; }
+  function extraLabel(s) { return s.exercises.length === 1 ? t("ses.extra1") : t("ses.extraN"); }
+  function freeSession(d) { return d ? d.sessions.filter(function (s) { return s.free; })[0] || null : null; }
   function closeOpen(d) { var o = openSession(d); if (o) { o.done = true; o.end = Date.now(); } }
   function sessionSets(s) { var n = 0; s.exercises.forEach(function (e) { n += e.sets.length; }); return n; }
   function timeFmt(ms) { return new Intl.DateTimeFormat(LOCALES[lang], { hour: "2-digit", minute: "2-digit" }).format(new Date(ms)); }
   function sessionTime(s) {
+    if (s.free) return s.start ? timeFmt(s.start) : "";
     if (!s.done) return s.start ? t("ses.running", { t: timeFmt(s.start) }) : t("ses.live");
     if (s.start && s.end) return timeFmt(s.start) + "–" + timeFmt(s.end);
     if (s.end) return t("ses.doneAt", { t: timeFmt(s.end) });
@@ -1300,7 +1323,7 @@ body.timing .app { padding-bottom: 160px; }
   // Which of the user's workouts a session belongs to: the one recorded when sets were ticked in My workout,
   // otherwise the workout that shares the most exercises with it.
   function planOfSession(s) {
-    if (!s) return null;
+    if (!s || s.free) return null;
     if (s.plan) {
       var p = planById(s.plan.id);
       return { id: s.plan.id, name: p ? p.name : s.plan.name, plan: p };
@@ -1358,6 +1381,10 @@ body.timing .app { padding-bottom: 160px; }
     });
   }
   function renderDay() {
+    var ld = $("logDone"), dl = doneList();
+    ld.textContent = "";
+    ld.hidden = !dl;
+    if (dl) ld.appendChild(dl);
     var d = day(cur), list = $("dayList"), tot = $("totals");
     list.textContent = "";
     tot.textContent = "";
@@ -1375,11 +1402,11 @@ body.timing .app { padding-bottom: 160px; }
       tot.title = t("lifted.title");
     }
     d.sessions.forEach(function (s) {
-      var box = el("div", "session" + (s.done ? "" : " live"));
+      var box = el("div", "session" + (s.free ? " free" : s.done ? "" : " live"));
       var head = el("div", "seshead"), po = planOfSession(s);
-      head.appendChild(el("div", "sesname", po ? po.name : t("cal.free")));
+      head.appendChild(el("div", "sesname", s.free ? extraLabel(s) : po ? po.name : t("cal.free")));
       var tm = el("div", "sestime", sessionTime(s));
-      if (s.done && cur === today()) { tm.appendChild(txt(" · ")); tm.appendChild(editLink(cur, s)); }
+      if (s.done && !s.free && cur === today()) { tm.appendChild(txt(" · ")); tm.appendChild(editLink(cur, s)); }
       head.appendChild(tm);
       box.appendChild(head);
       s.exercises.forEach(function (ex, ei) {
@@ -1421,7 +1448,7 @@ body.timing .app { padding-bottom: 160px; }
         }));
         box.appendChild(card);
       });
-      if (!s.done) box.appendChild(finishBlock(cur, s));
+      if (!s.done && !s.free) box.appendChild(finishBlock(cur, s));
       box.appendChild(confirmRow("ses:" + s.id, t("ses.del"), t("ses.delQ"), function () {
         d.sessions = d.sessions.filter(function (x) { return x !== s; });
       }));
@@ -1502,6 +1529,7 @@ body.timing .app { padding-bottom: 160px; }
         (s.start ? " · " + timeFmt(s.start) : "")));
       b.appendChild(dd);
       b.appendChild(el("span", "what", po ? po.name : s.exercises.map(function (e) { return e.name; }).join(", ")));
+      if (s.free) b.classList.add("freerow");
       b.appendChild(el("span", "cnt", count(sessionSets(s), "sets")));
       list.appendChild(b);
     });
@@ -2115,14 +2143,33 @@ body.timing .app { padding-bottom: 160px; }
   }
 
   // Every finished workout of the selected day, shown at the top of My workout without picking a plan.
+  var extraOpen = {};                          // remembers whether the extra-exercises list is unfolded, per day
   function doneList() {
-    var fin = day(cur).sessions.filter(function (s) { return s.done && s.exercises.length; });
+    var fin = day(cur).sessions.filter(function (s) { return (s.done || s.free) && s.exercises.length; });
     if (!fin.length) return null;
     var fb = el("div", "donelist");
     fb.appendChild(el("div", "lbl", cur === today() ? t("ses.earlier") : t("ses.thatDay")));
     fin.forEach(function (s) {
-      var po = planOfSession(s), line = el("div", "doneitem");
-      var text = "✓ " + [po ? po.name : t("cal.free"), sessionTime(s), count(sessionSets(s), "sets")].filter(Boolean).join(" · ");
+      var po = planOfSession(s);
+      var text = "✓ " + [s.free ? extraLabel(s) : po ? po.name : t("cal.free"), sessionTime(s), count(sessionSets(s), "sets")].filter(Boolean).join(" · ");
+      if (s.free) {
+        // Extra exercises (added in the Log) fold out into a list of what was done.
+        var det = el("details", "doneitem extra"), sum = el("summary", null, text);
+        det.open = !!extraOpen[cur];
+        det.addEventListener("toggle", function () { extraOpen[cur] = det.open; });
+        det.appendChild(sum);
+        var rows = el("div", "extralist");
+        s.exercises.forEach(function (e) {
+          var r = el("div", "hrow");
+          r.appendChild(el("span", "d", e.name));
+          r.appendChild(el("span", null, e.sets.map(function (x) { return setText(x, typeOf(e)); }).join(" · ")));
+          rows.appendChild(r);
+        });
+        det.appendChild(rows);
+        fb.appendChild(det);
+        return;
+      }
+      var line = el("div", "doneitem");
       line.appendChild(el("span", null, text));
       if (cur === today()) { line.appendChild(txt(" · ")); line.appendChild(editLink(cur, s)); }
       fb.appendChild(line);
@@ -2637,7 +2684,14 @@ body.timing .app { padding-bottom: 160px; }
     var d = days[date] || (days[date] = mkDay(date, []));
     var s = sid ? sessionById(d, sid) : null;
     if (!s && plan) s = viewSession(date, plan);
-    if (!s && !plan) s = isToday ? openSession(d) : d.sessions[d.sessions.length - 1] || null;
+    if (!s && !plan) {
+      s = freeSession(d);
+      if (!s) {
+        s = { id: "s" + newId(), free: true, exercises: [] };
+        if (isToday) s.start = Date.now(); else s.done = true;
+        d.sessions.push(s);
+      }
+    }
     if (!s) {
       if (isToday) closeOpen(d);               // starting another workout ends the one still open
       s = { id: "s" + newId(), exercises: [] };
@@ -2654,7 +2708,7 @@ body.timing .app { padding-bottom: 160px; }
     hideToast();
     touch(date);
     renderData();
-    if (isToday && !s.done && type !== "cardio") startRest(restSec);
+    if (isToday && (!s.done || s.free) && type !== "cardio") startRest(restSec);
   }
   function sessionMeta(s) {
     var m = { id: s.id };
