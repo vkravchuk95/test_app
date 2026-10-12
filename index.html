@@ -388,6 +388,20 @@ body.timing .app { padding-bottom: 160px; }
 /* Tabs stay inside the screen at large interface sizes */
 .tabs button { flex: 1 1 0; min-width: 0; white-space: normal; line-height: 1.15; height: auto; min-height: 40px; padding: 6px 4px; font-size: 13.5px; hyphens: auto; }
 .setcard .sw span { min-width: 0; }
+
+/* Exercise type picker */
+.typepick { display: flex; flex-wrap: wrap; gap: 4px; padding: 3px; border: 1px solid var(--line); border-radius: 12px; background: var(--field); }
+.typepick button {
+  flex: 1 1 auto; min-width: 0; height: 36px; padding: 0 8px; border: 0; border-radius: 9px; background: none;
+  font-size: 13px; font-weight: 500; color: var(--muted); white-space: nowrap;
+}
+.typepick button[aria-checked="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
+.edrow .typepick { background: var(--surface); }
+.edrow .typepick button[aria-checked="true"] { background: var(--accent); color: var(--accent-ink); box-shadow: none; }
+.chk.play { border-color: var(--accent); color: var(--accent); font-size: 15px; }
+.pair.one { grid-template-columns: minmax(0, 1fr); }
+.timer.work { background: var(--accent); color: var(--accent-ink); }
+.timer.work .tfill { background: var(--accent-ink); opacity: .45; }
 </style>
 
 <div class="app">
@@ -428,22 +442,40 @@ body.timing .app { padding-bottom: 160px; }
       <div class="hint" id="lastHint" hidden></div>
     </div>
     <div class="quick" id="quick" data-ia="log.quickAria" aria-label="Быстрый выбор упражнения"></div>
+    <div class="typepick" id="typePick" role="radiogroup"></div>
     <div class="nums">
-      <div>
-        <label for="weight" data-i="f.w">Вес, кг</label>
+      <div id="fW">
+        <label for="weight" id="wLabel">Вес, кг</label>
         <div class="stepper" id="wBox">
           <button type="button" data-step="weight" data-by="-2.5" data-ia="log.wMinus" aria-label="Минус 2,5 кг">−</button>
           <input id="weight" type="text" inputmode="decimal" value="20" aria-describedby="wNote">
           <button type="button" data-step="weight" data-by="2.5" data-ia="log.wPlus" aria-label="Плюс 2,5 кг">+</button>
         </div>
-        <div class="hint" id="wNote" data-i="log.bw">0 — свой вес</div>
+        <div class="hint" id="wNote"></div>
       </div>
-      <div>
+      <div id="fR">
         <label for="reps" data-i="f.reps">Повторения</label>
         <div class="stepper" id="rBox">
           <button type="button" data-step="reps" data-by="-1" data-ia="log.rMinus" aria-label="Минус одно повторение">−</button>
           <input id="reps" type="text" inputmode="numeric" value="10">
           <button type="button" data-step="reps" data-by="1" data-ia="log.rPlus" aria-label="Плюс одно повторение">+</button>
+        </div>
+      </div>
+      <div id="fT" hidden>
+        <label for="dur" id="tLbl">Время подхода</label>
+        <div class="stepper" id="tBox">
+          <button type="button" data-step="dur" data-by="-15" data-ia="log.tMinus" aria-label="Меньше">−</button>
+          <input id="dur" type="text" inputmode="numeric" value="1:00" aria-describedby="tNote">
+          <button type="button" data-step="dur" data-by="15" data-ia="log.tPlus" aria-label="Больше">+</button>
+        </div>
+        <div class="hint" id="tNote" data-i="log.durNote">мин:сек</div>
+      </div>
+      <div id="fD" hidden>
+        <label for="dist" data-i="f.dist">Дистанция, км</label>
+        <div class="stepper" id="dBox">
+          <button type="button" data-step="dist" data-by="-0.5" data-ia="log.dMinus" aria-label="Минус 0,5 км">−</button>
+          <input id="dist" type="text" inputmode="decimal" value="" placeholder="0">
+          <button type="button" data-step="dist" data-by="0.5" data-ia="log.dPlus" aria-label="Плюс 0,5 км">+</button>
         </div>
       </div>
     </div>
@@ -548,6 +580,18 @@ body.timing .app { padding-bottom: 160px; }
   var LANG_NAMES = { ru: "Русский", uk: "Українська", en: "English" };
   var I18N = {
     ru: {
+      "type.w": "Вес", "type.bw": "Свой вес", "type.time": "Время", "type.cardio": "Кардио", "f.type": "Тип упражнения",
+      "f.extra": "Доп. вес, кг", "log.extraNote": "0 — без доп. веса", "f.time": "Время подхода", "f.dur": "Время",
+      "f.dist": "Дистанция, км", "log.durNote": "мин:сек, например 1:30", "log.tMinus": "Меньше", "log.tPlus": "Больше",
+      "log.dMinus": "Минус 0,5 км", "log.dPlus": "Плюс 0,5 км",
+      "plan.noExtra": "без доп. веса", "plan.extraW": "Доп. вес на эту тренировку", "plan.timeToday": "Время подхода на эту тренировку",
+      "plan.tDown": "Меньше на 15 секунд, {n}", "plan.tUp": "Больше на 15 секунд, {n}",
+      "work.label": "Подход: {n}", "work.stop": "Стоп", "plan.startAria": "Начать подход с отсчётом, {n}",
+      "plan.durAria": "Время, {n}", "plan.distAria": "Дистанция, {n}",
+      "plan.hintTime": "В упражнениях на время кнопка ▶ запускает отсчёт; «Стоп» записывает фактическое время.",
+      "ph.bestE": "Лучший доп. вес: ", "ph.bestT": "Самый долгий подход: ", "ph.bestD": "Дистанция за тренировку: ", "ph.bestDur": "Время за тренировку: ",
+      "ph.mE": "доп. вес", "ph.mT": "время подхода", "ph.mD": "дистанция", "ph.mDur": "время",
+      "u.km": "км", "u.pace": "{p} мин/км",
       "app.title": "Журнал тренировок",
       "tab.log": "Журнал", "tab.plan": "Моя тренировка", "tab.cal": "Календарь", "nav.tabs": "Разделы",
       "date.prev": "Предыдущий день", "date.next": "Следующий день", "date.today": "Сегодня", "date.toToday": "к сегодня",
@@ -615,6 +659,18 @@ body.timing .app { padding-bottom: 160px; }
       "set.doImport": "Импортировать", "set.imported": "Готово: импортировано {d} и {p}."
     },
     uk: {
+      "type.w": "Вага", "type.bw": "Власна вага", "type.time": "Час", "type.cardio": "Кардіо", "f.type": "Тип вправи",
+      "f.extra": "Дод. вага, кг", "log.extraNote": "0 — без додаткової ваги", "f.time": "Час підходу", "f.dur": "Час",
+      "f.dist": "Дистанція, км", "log.durNote": "хв:сек, наприклад 1:30", "log.tMinus": "Менше", "log.tPlus": "Більше",
+      "log.dMinus": "Мінус 0,5 км", "log.dPlus": "Плюс 0,5 км",
+      "plan.noExtra": "без додаткової ваги", "plan.extraW": "Дод. вага на це тренування", "plan.timeToday": "Час підходу на це тренування",
+      "plan.tDown": "Менше на 15 секунд, {n}", "plan.tUp": "Більше на 15 секунд, {n}",
+      "work.label": "Підхід: {n}", "work.stop": "Стоп", "plan.startAria": "Почати підхід із відліком, {n}",
+      "plan.durAria": "Час, {n}", "plan.distAria": "Дистанція, {n}",
+      "plan.hintTime": "У вправах на час кнопка ▶ запускає відлік; «Стоп» записує фактичний час.",
+      "ph.bestE": "Найкраща дод. вага: ", "ph.bestT": "Найдовший підхід: ", "ph.bestD": "Дистанція за тренування: ", "ph.bestDur": "Час за тренування: ",
+      "ph.mE": "дод. вага", "ph.mT": "час підходу", "ph.mD": "дистанція", "ph.mDur": "час",
+      "u.km": "км", "u.pace": "{p} хв/км",
       "app.title": "Журнал тренувань",
       "tab.log": "Журнал", "tab.plan": "Моє тренування", "tab.cal": "Календар", "nav.tabs": "Розділи",
       "date.prev": "Попередній день", "date.next": "Наступний день", "date.today": "Сьогодні", "date.toToday": "до сьогодні",
@@ -682,6 +738,18 @@ body.timing .app { padding-bottom: 160px; }
       "set.doImport": "Імпортувати", "set.imported": "Готово: імпортовано {d} і {p}."
     },
     en: {
+      "type.w": "Weight", "type.bw": "Bodyweight", "type.time": "Time", "type.cardio": "Cardio", "f.type": "Exercise type",
+      "f.extra": "Added weight, kg", "log.extraNote": "0 = no added weight", "f.time": "Time per set", "f.dur": "Duration",
+      "f.dist": "Distance, km", "log.durNote": "min:sec, e.g. 1:30", "log.tMinus": "Less", "log.tPlus": "More",
+      "log.dMinus": "Minus 0.5 km", "log.dPlus": "Plus 0.5 km",
+      "plan.noExtra": "no added weight", "plan.extraW": "Added weight for this workout", "plan.timeToday": "Time per set for this workout",
+      "plan.tDown": "15 seconds less, {n}", "plan.tUp": "15 seconds more, {n}",
+      "work.label": "Set: {n}", "work.stop": "Stop", "plan.startAria": "Start a timed set, {n}",
+      "plan.durAria": "Duration, {n}", "plan.distAria": "Distance, {n}",
+      "plan.hintTime": "For timed exercises, ▶ starts a countdown; “Stop” records the time so far.",
+      "ph.bestE": "Best added weight: ", "ph.bestT": "Longest set: ", "ph.bestD": "Distance per workout: ", "ph.bestDur": "Time per workout: ",
+      "ph.mE": "added weight", "ph.mT": "time per set", "ph.mD": "distance", "ph.mDur": "duration",
+      "u.km": "km", "u.pace": "{p} min/km",
       "app.title": "Workout Log",
       "tab.log": "Log", "tab.plan": "My workout", "tab.cal": "Calendar", "nav.tabs": "Sections",
       "date.prev": "Previous day", "date.next": "Next day", "date.today": "Today", "date.toToday": "back to today",
@@ -813,8 +881,41 @@ body.timing .app { padding-bottom: 160px; }
   function dec(n) { return lang === "en" ? String(n) : String(n).replace(".", ","); }
   function dow() { return DOW_SHORT[lang]; }
   function dowFull(d) { return new Intl.DateTimeFormat(LOCALES[lang], { weekday: "long" }).format(new Date(2024, 0, 1 + d)); }
-  function setText(s) { return s.w > 0 ? num(s.w) + " × " + s.r : "× " + s.r; }
-  function kgText(w, r) { return w > 0 ? num(w) + " " + t("kg") + " × " + r : "× " + r; }
+  // ---------- exercise types: w = weight × reps, bw = bodyweight (+ optional added weight), time = timed hold, cardio = time + distance
+  var TYPES = ["w", "bw", "time", "cardio"];
+  function typeOf(x) { return x && TYPES.indexOf(x.type) >= 0 ? x.type : "w"; }
+  function durText(sec) {
+    sec = Math.max(0, Math.round(sec || 0));
+    var h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+    return h ? h + ":" + pad(m) + ":" + pad(s) : m + ":" + pad(s);
+  }
+  // "1:30" → 90 s; a plain number counts in plainUnit seconds (1 for holds, 60 for cardio minutes).
+  function parseDur(v, plainUnit) {
+    v = String(v == null ? "" : v).trim().replace(/[.,]/g, ":");
+    if (!v) return NaN;
+    if (v.indexOf(":") >= 0) {
+      var p = v.split(":").map(function (x) { return x === "" ? 0 : Number(x); });
+      if (p.some(function (x) { return !isFinite(x) || x < 0; }) || p.length > 3) return NaN;
+      return p.length === 3 ? p[0] * 3600 + p[1] * 60 + p[2] : p[0] * 60 + p[1];
+    }
+    var n = Number(v);
+    return isFinite(n) ? Math.round(n * plainUnit) : NaN;
+  }
+  function kmText(d) { return num(d) + " " + t("u.km"); }
+  function copySet(s) { return JSON.parse(JSON.stringify(s)); }
+  function setText(s, type) {
+    type = type || "w";
+    if (type === "time") return durText(s.t);
+    if (type === "cardio") return durText(s.t) + (s.d > 0 ? " · " + kmText(s.d) : "");
+    if (type === "bw") return s.w > 0 ? "+" + num(s.w) + " × " + s.r : "× " + s.r;
+    return s.w > 0 ? num(s.w) + " × " + s.r : "× " + s.r;
+  }
+  function kgText(s, type) {
+    type = type || "w";
+    if (type === "time" || type === "cardio") return setText(s, type);
+    if (s.w > 0) return (type === "bw" ? "+" : "") + num(s.w) + " " + t("kg") + " × " + s.r;
+    return "× " + s.r;
+  }
   function clock(sec) { return Math.floor(sec / 60) + ":" + pad(sec % 60); }
   function restLabel(sec) {
     if (!sec) return t("rest.none");
@@ -833,9 +934,14 @@ body.timing .app { padding-bottom: 160px; }
 
   // ---------- data cleaning (cloud reads and backup imports) ----------
   var DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-  function cleanSets(sets) {
+  function cleanSets(sets, type) {
     if (!Array.isArray(sets)) return [];
     return sets.map(function (s) {
+      if (type === "time" || type === "cardio") {
+        var sec = Math.round(+(s && s.t)), km = +(s && s.d) || 0;
+        if (!(sec >= 1) || sec > 86400) return null;
+        return type === "time" ? { t: sec } : { t: sec, d: km >= 0 && km <= 1000 ? Math.round(km * 100) / 100 : 0 };
+      }
       var w = +(s && s.w), r = Math.round(+(s && s.r));
       if (!(w >= 0) || w > 1000 || !(r >= 1) || r > 1000) return null;
       return { w: Math.round(w * 100) / 100, r: r };
@@ -847,8 +953,11 @@ body.timing .app { padding-bottom: 160px; }
     if (!Array.isArray(list)) return null;
     var ex = list.map(function (e) {
       if (!e || typeof e.name !== "string" || !e.name.trim()) return null;
-      var sets = cleanSets(e.sets);
-      return sets.length ? { name: e.name.trim().slice(0, 60), sets: sets } : null;
+      var type = typeOf(e), sets = cleanSets(e.sets, type);
+      if (!sets.length) return null;
+      var out = { name: e.name.trim().slice(0, 60), sets: sets };
+      if (type !== "w") out.type = type;
+      return out;
     }).filter(Boolean);
     if (!ex.length) return null;
     var d = { date: date, exercises: ex };
@@ -861,9 +970,13 @@ body.timing .app { padding-bottom: 160px; }
     var items = p.items.map(function (it) {
       if (!it || typeof it.name !== "string" || !it.name.trim()) return null;
       var sets = Math.round(+it.sets), reps = Math.round(+it.reps), w = +it.w, rest = it.rest == null ? 90 : Math.round(+it.rest);
+      var type = typeOf(it), sec = Math.round(+it.t), km = +it.d;
       return {
         name: it.name.trim().slice(0, 60),
-        sets: sets >= 1 && sets <= 20 ? sets : 3,
+        type: type,
+        t: sec >= 1 && sec <= 86400 ? sec : (type === "cardio" ? 1800 : 60),
+        d: type === "cardio" && km > 0 && km <= 1000 ? km : 0,
+        sets: type === "cardio" ? 1 : (sets >= 1 && sets <= 20 ? sets : 3),
         reps: reps >= 1 && reps <= 1000 ? reps : 10,
         w: w >= 0 && w <= 1000 ? Math.round(w * 100) / 100 : 0,
         rest: rest >= 0 && rest <= 900 ? rest : 90
@@ -1072,7 +1185,7 @@ body.timing .app { padding-bottom: 160px; }
     var dates = Object.keys(days).filter(function (d) { return d < before; }).sort().reverse();
     for (var i = 0; i < dates.length; i++) {
       var ex = days[dates[i]].exercises.filter(function (e) { return same(e.name, name); })[0];
-      if (ex && ex.sets.length) return { date: dates[i], sets: ex.sets };
+      if (ex && ex.sets.length) return { date: dates[i], sets: ex.sets, type: typeOf(ex) };
     }
     return null;
   }
@@ -1090,7 +1203,10 @@ body.timing .app { padding-bottom: 160px; }
   }
   function tonnage(d) {
     var kg = 0, sets = 0;
-    d.exercises.forEach(function (e) { e.sets.forEach(function (s) { kg += s.w * s.r; sets++; }); });
+    d.exercises.forEach(function (e) {
+      var weighted = typeOf(e) === "w";
+      e.sets.forEach(function (s) { if (weighted) kg += s.w * s.r; sets++; });
+    });
     return { kg: kg, sets: sets };
   }
   function planDays(p) { return Array.isArray(p.days) ? p.days : []; }
@@ -1133,7 +1249,7 @@ body.timing .app { padding-bottom: 160px; }
     var last = name ? lastTime(name, cur) : null;
     if (!last) { box.hidden = true; return; }
     box.textContent = t("lastTime", { d: fmt(last.date, { day: "numeric", month: "short" }) });
-    box.appendChild(el("b", null, last.sets.map(setText).join(" · ")));
+    box.appendChild(el("b", null, last.sets.map(function (s) { return setText(s, last.type); }).join(" · ")));
     box.hidden = false;
   }
   function renderQuick() {
@@ -1165,32 +1281,35 @@ body.timing .app { padding-bottom: 160px; }
     d.exercises.forEach(function (ex, ei) {
       var card = el("div", "ex");
       card.appendChild(el("div", "name", ex.name));
-      var kg = 0;
-      ex.sets.forEach(function (s) { kg += s.w * s.r; });
-      card.appendChild(el("div", "meta", count(ex.sets.length, "sets") +
-        (prefs.totals && kg > 0 ? " · " + t("lifted.ex") + " " + num(kg) + " " + t("kg") : "")));
+      var type = typeOf(ex), kg = 0, secs = 0, km = 0;
+      ex.sets.forEach(function (s) { if (type === "w") kg += s.w * s.r; secs += s.t || 0; km += s.d || 0; });
+      var metaText = count(ex.sets.length, "sets");
+      if (type === "w" && prefs.totals && kg > 0) metaText += " · " + t("lifted.ex") + " " + num(kg) + " " + t("kg");
+      if (type === "time") metaText += " · " + t("type.time").toLowerCase() + " " + durText(secs);
+      if (type === "cardio") metaText = t("type.cardio") + " · " + durText(secs) + (km > 0 ? " · " + kmText(km) + " · " + paceText(secs, km) : "");
+      card.appendChild(el("div", "meta", metaText));
       var row = el("div", "sets");
       ex.sets.forEach(function (s, si) {
         var chip = el("span", "set");
         if (justAdded && same(justAdded.name, ex.name) && justAdded.index === si) chip.classList.add("new");
         chip.appendChild(el("span", "n", String(si + 1)));
         var v = el("span", "v");
-        if (s.w > 0) {
-          v.appendChild(txt(num(s.w) + " "));
+        if ((type === "w" || type === "bw") && s.w > 0) {
+          v.appendChild(txt((type === "bw" ? "+" : "") + num(s.w) + " "));
           v.appendChild(el("small", null, t("kg")));
           v.appendChild(txt(" × " + s.r));
         } else {
-          v.textContent = "× " + s.r;
+          v.textContent = setText(s, type);
         }
         chip.appendChild(v);
         var del = btn("del", "×", function () { removeSet(ei, si); });
-        del.setAttribute("aria-label", t("del.setAria", { n: si + 1, s: setText(s) }));
+        del.setAttribute("aria-label", t("del.setAria", { n: si + 1, s: setText(s, type) }));
         chip.appendChild(del);
         row.appendChild(chip);
       });
       var last = ex.sets[ex.sets.length - 1];
-      var more = btn("again", t("log.more", { s: setText(last) }), function () { addSet(ex.name, last.w, last.r); });
-      more.setAttribute("aria-label", t("log.moreAria", { s: setText(last) }));
+      var more = btn("again", t("log.more", { s: setText(last, type) }), function () { addSet(ex.name, copySet(last), cur, undefined, null, type); });
+      more.setAttribute("aria-label", t("log.moreAria", { s: setText(last, type) }));
       row.appendChild(more);
       card.appendChild(row);
       card.appendChild(confirmRow("ex:" + ei, t("del.ex"), t("del.exQ", { n: ex.name }), function () {
@@ -1287,6 +1406,7 @@ body.timing .app { padding-bottom: 160px; }
   var rest = lsGet("wl-rest", null) || {};
   rest = { on: !!rest.on, sec: REST_OPTS.indexOf(rest.sec) >= 0 ? rest.sec : 90 };
   var tEnd = 0, tTotal = 0, tInt = null, tHide = null, actx = null, beepGain = null, wake = null, tDone = false;
+  var tMode = "rest", workStart = 0, workName = "", workDone = null;   // tMode: "rest" | "work"
 
   function renderRest() {
     $("restOn").checked = rest.on;
@@ -1325,7 +1445,7 @@ body.timing .app { padding-bottom: 160px; }
   }
   function tick() {
     var ms = tEnd - Date.now();
-    if (ms <= 0) { finishRest(); return; }
+    if (ms <= 0) { if (tMode === "work") finishWork(tTotal); else finishRest(); return; }
     $("tTime").textContent = clock(Math.ceil(ms / 1000));
     $("tFill").style.width = Math.max(0, Math.min(100, ms / (tTotal * 10))) + "%";
   }
@@ -1334,14 +1454,57 @@ body.timing .app { padding-bottom: 160px; }
     document.body.classList.toggle("timing", on);
   }
   function timerLabels() {
+    if (tMode === "work") {
+      $("tLabel").textContent = t("work.label", { n: workName });
+      $("tStop").textContent = t("work.stop");
+      $("tPlus").textContent = t("cancel");
+      return;
+    }
     $("tLabel").textContent = tDone ? t("rest.done") : t("rest.label");
     $("tStop").textContent = tDone ? t("rest.close") : t("rest.skip");
     $("tPlus").textContent = t("rest.plus");
   }
+  function grabWake() {
+    try {
+      if (!wake && navigator.wakeLock) navigator.wakeLock.request("screen").then(function (w) { wake = w; }, function () {});
+    } catch (e) {}
+  }
+  // Countdown for a timed set (plank, hang): records the set when it ends, or the time so far on "Stop".
+  function startWork(sec, name, onDone) {
+    clearInterval(tInt); clearTimeout(tHide); cancelBeep();
+    tMode = "work"; tDone = false; workName = name; workDone = onDone;
+    tTotal = sec; workStart = Date.now(); tEnd = workStart + sec * 1000;
+    $("timer").classList.remove("done");
+    $("timer").classList.add("work");
+    timerLabels();
+    $("tPlus").hidden = false;
+    showTimer(true);
+    scheduleBeep(sec);
+    tick();
+    tInt = setInterval(tick, 250);
+    grabWake();
+  }
+  function finishWork(sec) {
+    var cb = workDone;
+    clearInterval(tInt); tInt = null; cancelBeep();
+    tMode = "rest"; workDone = null;
+    $("timer").classList.remove("work");
+    showTimer(false);
+    releaseWake();
+    haptic("done");
+    if (cb && sec >= 1) cb(Math.round(sec));
+  }
+  function cancelWork() {
+    clearInterval(tInt); tInt = null; cancelBeep();
+    tMode = "rest"; workDone = null;
+    $("timer").classList.remove("work");
+    showTimer(false);
+    releaseWake();
+  }
   function releaseWake() { if (wake) { try { wake.release(); } catch (e) {} wake = null; } }
   function startRest(sec) {
     var s = sec != null ? sec : (rest.on ? rest.sec : 0);
-    if (!s) return;
+    if (!s || tMode === "work") return;
     clearInterval(tInt); clearTimeout(tHide);
     tTotal = s;
     tEnd = Date.now() + s * 1000;
@@ -1370,6 +1533,7 @@ body.timing .app { padding-bottom: 160px; }
     tHide = setTimeout(function () { showTimer(false); }, 8000);
   }
   function stopRest() {
+    if (tMode === "work") return;
     clearInterval(tInt); tInt = null; clearTimeout(tHide);
     cancelBeep(); releaseWake();
     showTimer(false);
@@ -1419,7 +1583,12 @@ body.timing .app { padding-bottom: 160px; }
   }
   function restOf(it) { return it.rest == null ? 90 : it.rest; }
   function planLine(it) {
-    return count(it.sets, "sets") + " × " + it.reps + ", " + (it.w > 0 ? num(it.w) + " " + t("kg") : t("bodyweight"));
+    var type = typeOf(it);
+    if (type === "cardio") return durText(it.t) + (it.d > 0 ? " · " + kmText(it.d) : "");
+    if (type === "time") return count(it.sets, "sets") + " × " + durText(it.t);
+    var base = count(it.sets, "sets") + " × " + it.reps;
+    if (type === "bw") return base + ", " + (it.w > 0 ? "+" + num(it.w) + " " + t("kg") : t("bodyweight"));
+    return base + ", " + (it.w > 0 ? num(it.w) + " " + t("kg") : t("bodyweight"));
   }
   function curDow() { return (toDate(cur).getDay() + 6) % 7; }
   // Show the workout that belongs to the selected day.
@@ -1437,24 +1606,32 @@ body.timing .app { padding-bottom: 160px; }
     }
     planSel = best ? best.id : null;
   }
+  var TYPE_DEFAULTS = { w: { t: 60, d: 0 }, bw: { t: 60, d: 0 }, time: { t: 60, d: 0 }, cardio: { t: 1800, d: 0 } };
   function draftOf(it) {
-    return { name: it.name, sets: String(it.sets), reps: String(it.reps), w: dec(it.w), rest: restOf(it) };
+    var type = typeOf(it);
+    return {
+      name: it.name, type: type, sets: String(it.sets), reps: String(it.reps), w: dec(it.w),
+      t: durText(it.t || TYPE_DEFAULTS[type].t), d: it.d > 0 ? dec(it.d) : "", rest: restOf(it)
+    };
   }
-  function blankItem() { return { name: "", sets: "3", reps: "10", w: dec(20), rest: 90 }; }
+  function blankItem() { return { name: "", type: "w", sets: "3", reps: "10", w: dec(20), t: "1:00", d: "", rest: 90 }; }
   function clampInt(v, def, max) {
     var n = Math.round(parseNum(v));
     return n >= 1 ? Math.min(n, max) : def;
   }
-  function parseItem(d) {
-    var name = d.name.trim().replace(/\s+/g, " ");
+  function parseItem(dr) {
+    var name = dr.name.trim().replace(/\s+/g, " ");
     if (!name) return null;
-    var w = parseNum(d.w);
+    var type = TYPES.indexOf(dr.type) >= 0 ? dr.type : "w";
+    var w = parseNum(dr.w), sec = parseDur(dr.t, type === "cardio" ? 60 : 1), km = parseNum(dr.d);
     return {
-      name: name,
-      sets: clampInt(d.sets, 3, 20),
-      reps: clampInt(d.reps, 10, 1000),
-      w: w >= 0 ? Math.min(Math.round(w * 100) / 100, 1000) : 0,
-      rest: +d.rest || 0
+      name: name, type: type,
+      sets: type === "cardio" ? 1 : clampInt(dr.sets, 3, 20),
+      reps: clampInt(dr.reps, 10, 1000),
+      w: (type === "w" || type === "bw") && w >= 0 ? Math.min(Math.round(w * 100) / 100, 1000) : 0,
+      t: sec >= 1 ? Math.min(sec, 86400) : TYPE_DEFAULTS[type].t,
+      d: type === "cardio" && km > 0 ? Math.min(Math.round(km * 100) / 100, 1000) : 0,
+      rest: type === "cardio" ? 0 : (+dr.rest || 0)
     };
   }
   function bound(cls, id, obj, key, mode) {
@@ -1470,22 +1647,60 @@ body.timing .app { padding-bottom: 160px; }
     w.appendChild(l); w.appendChild(input);
     return w;
   }
-  function itemFields(it, p) {
-    var g = el("div", "ed3");
-    g.appendChild(labeled(t("f.sets"), bound("mini", p + "sets", it, "sets", "numeric")));
-    g.appendChild(labeled(t("f.reps"), bound("mini", p + "reps", it, "reps", "numeric")));
-    g.appendChild(labeled(t("f.w"), bound("mini", p + "w", it, "w", "decimal")));
-    var s = el("select", "mini");
-    s.id = p + "rest";
-    REST_CHOICES.forEach(function (sec) {
-      var op = el("option", null, restLabel(sec));
-      op.value = String(sec);
-      s.appendChild(op);
+  function typePicker(current, onPick, idPrefix) {
+    var row = el("div", "typepick");
+    row.setAttribute("role", "radiogroup");
+    row.setAttribute("aria-label", t("f.type"));
+    TYPES.forEach(function (ty) {
+      var b = btn(null, t("type." + ty), function () { onPick(ty); });
+      b.id = idPrefix + ty;
+      b.setAttribute("role", "radio");
+      b.setAttribute("aria-checked", ty === current ? "true" : "false");
+      row.appendChild(b);
     });
-    s.value = String(it.rest);
-    s.addEventListener("change", function () { it.rest = +s.value; });
-    g.appendChild(labeled(t("f.rest"), s));
-    return g;
+    return row;
+  }
+  // Fields for one planned exercise; which ones show depends on its type.
+  function itemFields(it, p, rerender) {
+    var wrap = el("div");
+    wrap.appendChild(typePicker(it.type, function (ty) {
+      if (ty === it.type) return;
+      it.type = ty;
+      it.t = durText(TYPE_DEFAULTS[ty].t);
+      if (ty === "bw" && parseNum(it.w) === 20) it.w = "0";
+      rerender();
+    }, p + "type-"));
+    var g = el("div", "ed3");
+    g.style.marginTop = "10px";
+    var type = it.type;
+    if (type !== "cardio") g.appendChild(labeled(t("f.sets"), bound("mini", p + "sets", it, "sets", "numeric")));
+    if (type === "w" || type === "bw") {
+      g.appendChild(labeled(t("f.reps"), bound("mini", p + "reps", it, "reps", "numeric")));
+      g.appendChild(labeled(type === "bw" ? t("f.extra") : t("f.w"), bound("mini", p + "w", it, "w", "decimal")));
+    }
+    if (type === "time") g.appendChild(labeled(t("f.time"), bound("mini", p + "t", it, "t", "numeric")));
+    if (type === "cardio") {
+      g.appendChild(labeled(t("f.dur"), bound("mini", p + "t", it, "t", "numeric")));
+      var di = bound("mini", p + "d", it, "d", "decimal");
+      di.placeholder = "0";
+      g.appendChild(labeled(t("f.dist"), di));
+    }
+    if (type !== "cardio") {
+      var s = el("select", "mini");
+      s.id = p + "rest";
+      REST_CHOICES.forEach(function (sec) {
+        var op = el("option", null, restLabel(sec));
+        op.value = String(sec);
+        s.appendChild(op);
+      });
+      s.value = String(it.rest);
+      s.addEventListener("change", function () { it.rest = +s.value; });
+      g.appendChild(labeled(t("f.rest"), s));
+    }
+    wrap.appendChild(g);
+    if (type === "time" || type === "cardio") wrap.appendChild(el("div", "hint", t("log.durNote")));
+    if (type === "bw") wrap.appendChild(el("div", "hint", t("log.extraNote")));
+    return wrap;
   }
   function removeOnDay(name, k) {
     var d = days[cur], ei = -1;
@@ -1493,50 +1708,88 @@ body.timing .app { padding-bottom: 160px; }
     d.exercises.forEach(function (e, i) { if (same(e.name, name)) ei = i; });
     if (ei >= 0) removeSet(ei, k, cur);
   }
+  function miniInput(id, value, mode, aria, onInput) {
+    var i = el("input", "mini");
+    i.id = id; i.type = "text"; i.inputMode = mode; i.value = value;
+    i.setAttribute("aria-label", aria);
+    i.addEventListener("input", function () { onInput(i.value); i.classList.remove("bad"); });
+    i.addEventListener("focus", function () { i.select(); });
+    return i;
+  }
   function setRow(plan, it, i, k, sets) {
-    var n = sets.length, row = el("div", "srow"), key = plan.id + "|" + i;
+    var n = sets.length, row = el("div", "srow"), key = plan.id + "|" + i, type = typeOf(it);
+    function bad(id) { var f = $(id); if (f) { f.classList.add("bad"); f.focus(); } }
     function tickSet() {
-      var dr = drafts[key], wi = $("pw-" + i), ri = $("pr-" + i);
+      var dr = drafts[key];
       if (!dr) return;
-      var w = String(dr.w).trim() === "" ? 0 : parseNum(dr.w), r = Math.round(parseNum(dr.r));
-      if (!(w >= 0) || w > 1000) { if (wi) { wi.classList.add("bad"); wi.focus(); } return; }
-      if (!(r >= 1) || r > 1000) { if (ri) { ri.classList.add("bad"); ri.focus(); } return; }
+      var set;
+      if (type === "time" || type === "cardio") {
+        var sec = parseDur(dr.t, type === "cardio" ? 60 : 1);
+        if (!(sec >= 1) || sec > 86400) { bad("pt-" + i); return; }
+        set = { t: sec };
+        if (type === "cardio") {
+          var km = String(dr.d).trim() === "" ? 0 : parseNum(dr.d);
+          if (!(km >= 0) || km > 1000) { bad("pd-" + i); return; }
+          set.d = Math.round(km * 100) / 100;
+        }
+      } else {
+        var w = String(dr.w).trim() === "" ? 0 : parseNum(dr.w), r = Math.round(parseNum(dr.r));
+        if (!(w >= 0) || w > 1000) { bad("pw-" + i); return; }
+        if (!(r >= 1) || r > 1000) { bad("pr-" + i); return; }
+        set = { w: Math.round(w * 100) / 100, r: r };
+      }
       if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+      // A timed set done today runs a countdown first and is recorded when it ends.
+      if (type === "time" && cur === today()) {
+        var date = cur;
+        startWork(set.t, it.name, function (elapsed) {
+          delete drafts[key];
+          addSet(it.name, { t: elapsed }, date, restOf(it), plan, type);
+        });
+        return;
+      }
       delete drafts[key];
-      addSet(it.name, Math.round(w * 100) / 100, r, cur, restOf(it), plan);
+      addSet(it.name, set, cur, restOf(it), plan, type);
     }
     function circle() {
-      var c = btn("chk", "✓", tickSet);
-      c.setAttribute("aria-label", t("plan.tickAria", { n: it.name }));
+      var c = btn("chk" + (type === "time" && cur === today() ? " play" : ""), type === "time" && cur === today() ? "▶" : "✓", tickSet);
+      c.setAttribute("aria-label", t(type === "time" && cur === today() ? "plan.startAria" : "plan.tickAria", { n: it.name }));
       return c;
     }
     row.appendChild(el("span", "num", String(k + 1)));
     if (k < n) {
-      row.appendChild(el("span", "val", kgText(sets[k].w, sets[k].r)));
+      row.appendChild(el("span", "val", kgText(sets[k], type)));
       var on = btn("chk on", "✓", function () { removeOnDay(it.name, k); });
       on.setAttribute("aria-label", t("plan.untickAria", { k: k + 1 }));
       row.appendChild(on);
     } else if (k === n) {
-      var last = sets[n - 1];
-      var dr = drafts[key] || (drafts[key] = { w: dec(last ? last.w : it.w), r: String(last ? last.r : it.reps) });
+      var last = sets[n - 1], dr = drafts[key];
+      if (!dr) {
+        dr = drafts[key] = (type === "time" || type === "cardio")
+          ? { t: durText(last ? last.t : it.t), d: type === "cardio" ? ((last ? last.d : it.d) > 0 ? dec(last ? last.d : it.d) : "") : "" }
+          : { w: dec(last ? last.w : it.w), r: String(last ? last.r : it.reps) };
+      }
       row.classList.add("next");
-      var pair = el("div", "pair"), wi = el("input", "mini"), ri = el("input", "mini");
-      wi.id = "pw-" + i; wi.type = "text"; wi.inputMode = "decimal"; wi.value = dr.w;
-      wi.setAttribute("aria-label", t("plan.wAria", { n: it.name }));
-      ri.id = "pr-" + i; ri.type = "text"; ri.inputMode = "numeric"; ri.value = dr.r;
-      ri.setAttribute("aria-label", t("plan.rAria", { n: it.name }));
-      wi.addEventListener("input", function () { dr.w = wi.value; wi.classList.remove("bad"); });
-      ri.addEventListener("input", function () { dr.r = ri.value; ri.classList.remove("bad"); });
-      wi.addEventListener("focus", function () { wi.select(); });
-      ri.addEventListener("focus", function () { ri.select(); });
-      pair.appendChild(wi);
-      pair.appendChild(el("span", "unit", t("unitKgX")));
-      pair.appendChild(ri);
+      var pair = el("div", "pair");
+      if (type === "time") {
+        pair.classList.add("one");
+        pair.appendChild(miniInput("pt-" + i, dr.t, "numeric", t("plan.durAria", { n: it.name }), function (v) { dr.t = v; }));
+      } else if (type === "cardio") {
+        pair.appendChild(miniInput("pt-" + i, dr.t, "numeric", t("plan.durAria", { n: it.name }), function (v) { dr.t = v; }));
+        pair.appendChild(el("span", "unit", "·"));
+        var di = miniInput("pd-" + i, dr.d, "decimal", t("plan.distAria", { n: it.name }), function (v) { dr.d = v; });
+        di.placeholder = t("u.km");
+        pair.appendChild(di);
+      } else {
+        pair.appendChild(miniInput("pw-" + i, dr.w, "decimal", t("plan.wAria", { n: it.name }), function (v) { dr.w = v; }));
+        pair.appendChild(el("span", "unit", t("unitKgX")));
+        pair.appendChild(miniInput("pr-" + i, dr.r, "numeric", t("plan.rAria", { n: it.name }), function (v) { dr.r = v; }));
+      }
       row.appendChild(pair);
       row.appendChild(circle());
     } else {
       row.classList.add("todo");
-      row.appendChild(el("span", "val", kgText(it.w, it.reps)));
+      row.appendChild(el("span", "val", kgText(type === "time" || type === "cardio" ? { t: it.t, d: it.d } : { w: it.w, r: it.reps }, type)));
       row.appendChild(circle());
     }
     return row;
@@ -1555,7 +1808,7 @@ body.timing .app { padding-bottom: 160px; }
     n.maxLength = 60;
     n.setAttribute("aria-label", t("ie.namePh"));
     card.appendChild(n);
-    card.appendChild(itemFields(s.draft, "ie-"));
+    card.appendChild(itemFields(s.draft, "ie-", function () { renderPlan(true); }));
     if (s.err) card.appendChild(el("div", "err", s.err));
     var act = el("div", "actions");
     act.appendChild(btn("primary", t("save"), function () {
@@ -1582,7 +1835,7 @@ body.timing .app { padding-bottom: 160px; }
     renderPlan(true);
   }
 
-  // progress: today's weight and history chart
+  // progress: this workout's weight or time, and the history chart
   var SVGNS = "http://www.w3.org/2000/svg";
   function svg(tag, attrs, text) {
     var n = document.createElementNS(SVGNS, tag);
@@ -1595,31 +1848,50 @@ body.timing .app { padding-bottom: 160px; }
     Object.keys(days).sort().forEach(function (d) {
       var ex = days[d].exercises.filter(function (e) { return same(e.name, name); })[0];
       if (!ex || !ex.sets.length) return;
-      var top = 0, reps = 0;
-      ex.sets.forEach(function (x) { if (x.w > top) top = x.w; if (x.r > reps) reps = x.r; });
-      out.push({ date: d, sets: ex.sets, top: top, reps: reps });
+      var top = 0, reps = 0, tmax = 0, ttot = 0, dist = 0;
+      ex.sets.forEach(function (x) {
+        if (x.w > top) top = x.w;
+        if (x.r > reps) reps = x.r;
+        if (x.t > tmax) tmax = x.t;
+        ttot += x.t || 0;
+        dist += x.d || 0;
+      });
+      out.push({ date: d, type: typeOf(ex), sets: ex.sets, top: top, reps: reps, tmax: tmax, ttot: ttot, dist: dist });
     });
     return out;
   }
-  function stepWeight(plan, it, i, by) {
-    var w = Math.max(0, Math.round((it.w + by) * 100) / 100);
-    if (w === it.w) return;
-    it.w = w;
-    var key = plan.id + "|" + i, dr = drafts[key];
-    drafts[key] = { w: dec(w), r: dr ? dr.r : String(it.reps) };
+  function stepPlan(plan, it, i, field, by, min) {
+    var v = Math.max(min, Math.round(((+it[field] || 0) + by) * 100) / 100);
+    if (v === it[field]) return;
+    it[field] = v;
+    var key = plan.id + "|" + i, dr = drafts[key] || {};
+    if (field === "w") drafts[key] = { w: dec(v), r: dr.r != null ? dr.r : String(it.reps) };
+    else drafts[key] = { t: durText(v), d: dr.d != null ? dr.d : "" };
     savePlans();
     renderPlan(true);
   }
+  // The "this workout" stepper: weight for weighted lifts, added weight for bodyweight, time per set for timed holds.
   function weightRow(plan, it, i) {
-    var row = el("div", "wrow");
-    row.appendChild(el("div", "lbl", t("plan.weightToday")));
-    var st = el("div", "wstep");
-    var minus = btn(null, "−", function () { stepWeight(plan, it, i, -2.5); });
-    minus.setAttribute("aria-label", t("plan.wDown", { n: it.name }));
-    var plus = btn(null, "+", function () { stepWeight(plan, it, i, 2.5); });
-    plus.setAttribute("aria-label", t("plan.wUp", { n: it.name }));
+    var type = typeOf(it);
+    if (type === "cardio") return null;
+    var row = el("div", "wrow"), st = el("div", "wstep"), minus, plus, value;
+    if (type === "time") {
+      row.appendChild(el("div", "lbl", t("plan.timeToday")));
+      minus = btn(null, "−", function () { stepPlan(plan, it, i, "t", -15, 5); });
+      minus.setAttribute("aria-label", t("plan.tDown", { n: it.name }));
+      plus = btn(null, "+", function () { stepPlan(plan, it, i, "t", 15, 5); });
+      plus.setAttribute("aria-label", t("plan.tUp", { n: it.name }));
+      value = durText(it.t);
+    } else {
+      row.appendChild(el("div", "lbl", type === "bw" ? t("plan.extraW") : t("plan.weightToday")));
+      minus = btn(null, "−", function () { stepPlan(plan, it, i, "w", -2.5, 0); });
+      minus.setAttribute("aria-label", t("plan.wDown", { n: it.name }));
+      plus = btn(null, "+", function () { stepPlan(plan, it, i, "w", 2.5, 0); });
+      plus.setAttribute("aria-label", t("plan.wUp", { n: it.name }));
+      value = it.w > 0 ? (type === "bw" ? "+" : "") + num(it.w) + " " + t("kg") : (type === "bw" ? t("plan.noExtra") : t("bodyweight"));
+    }
     st.appendChild(minus);
-    st.appendChild(el("span", null, it.w > 0 ? num(it.w) + " " + t("kg") : t("bodyweight")));
+    st.appendChild(el("span", null, value));
     st.appendChild(plus);
     row.appendChild(st);
     return row;
@@ -1627,60 +1899,84 @@ body.timing .app { padding-bottom: 160px; }
   function shortDate(d) {
     return fmt(d, { day: "numeric", month: "short" }) + (d.slice(0, 4) !== today().slice(0, 4) ? " " + d.slice(0, 4) : "");
   }
+  function paceText(sec, km) { return km > 0 ? t("u.pace", { p: durText(sec / km) }) : ""; }
+  // What the progress chart tracks for each type of exercise.
+  function progressMetric(all, type) {
+    if (type === "time") return { label: t("ph.bestT"), aria: t("ph.mT"), val: function (x) { return x.tmax; }, show: durText, axis: durText };
+    if (type === "cardio") {
+      if (all.some(function (x) { return x.dist > 0; })) {
+        return { label: t("ph.bestD"), aria: t("ph.mD"), val: function (x) { return x.dist; }, show: kmText, axis: num };
+      }
+      return { label: t("ph.bestDur"), aria: t("ph.mDur"), val: function (x) { return x.ttot; }, show: durText, axis: durText };
+    }
+    if (all.some(function (x) { return x.top > 0; })) {
+      var kg = function (v) { return (type === "bw" && v > 0 ? "+" : "") + num(v) + " " + t("kg"); };
+      return { label: type === "bw" ? t("ph.bestE") : t("ph.bestW"), aria: type === "bw" ? t("ph.mE") : t("ph.mW"),
+        val: function (x) { return x.top; }, show: kg, axis: num };
+    }
+    return { label: t("ph.bestR"), aria: t("ph.mR"), val: function (x) { return x.reps; },
+      show: function (v) { return num(v) + " " + t("ph.repsUnit"); }, axis: num };
+  }
+  function signedDiff(m, a, b) {
+    var diff = Math.round((b - a) * 100) / 100;
+    var s = m.show(Math.abs(diff)).replace(/^\+/, "");
+    return (diff > 0 ? "+" : diff < 0 ? "−" : "") + s;
+  }
   function historyPanel(it) {
     var box = el("div", "hist"), all = sessionsOf(it.name);
     if (!all.length) {
       box.appendChild(el("div", "readout", t("ph.none")));
       return box;
     }
-    var byW = all.some(function (x) { return x.top > 0; }), unit = byW ? t("kg") : t("ph.repsUnit");
-    function val(x) { return byW ? x.top : x.reps; }
+    var type = typeOf(it), m = progressMetric(all, type);
     var first = all[0], lastS = all[all.length - 1];
     var sum = el("div", "totals");
-    sum.appendChild(txt(byW ? t("ph.bestW") : t("ph.bestR")));
+    sum.appendChild(txt(m.label));
     if (all.length > 1) {
-      var diff = Math.round((val(lastS) - val(first)) * 100) / 100;
-      sum.appendChild(el("b", null, num(val(first)) + " " + unit));
+      sum.appendChild(el("b", null, m.show(m.val(first))));
       sum.appendChild(txt(" → "));
-      sum.appendChild(el("b", null, num(val(lastS)) + " " + unit));
-      sum.appendChild(txt(" (" + (diff > 0 ? "+" : "") + num(diff) + " " + unit + " " +
+      sum.appendChild(el("b", null, m.show(m.val(lastS))));
+      sum.appendChild(txt(" (" + signedDiff(m, m.val(first), m.val(lastS)) + " " +
         t("ph.over", { n: num(all.length), w: tp("workoutsAcc", all.length) }) + ")"));
     } else {
-      sum.appendChild(el("b", null, num(val(first)) + " " + unit));
+      sum.appendChild(el("b", null, m.show(m.val(first))));
       sum.appendChild(txt(t("ph.one")));
     }
     box.appendChild(sum);
 
     if (all.length > 1) {
-      var pts = all.slice(-20), W = 320, H = 130, L = 34, R = 14, T = 12, B = 22;
-      var vs = pts.map(val), lo = Math.min.apply(null, vs), hi = Math.max.apply(null, vs);
-      if (lo === hi) { lo -= 1; hi += 1; }
+      var pts = all.slice(-20), W = 320, H = 130, L = 40, R = 14, T = 12, B = 22;
+      var vs = pts.map(m.val), lo = Math.min.apply(null, vs), hi = Math.max.apply(null, vs);
+      if (lo === hi) { lo = Math.max(0, lo - 1); hi += 1; }
       var X = function (k) { return L + k * (W - L - R) / (pts.length - 1); };
       var Y = function (v) { return T + (hi - v) * (H - T - B) / (hi - lo); };
       var root = svg("svg", { viewBox: "0 0 " + W + " " + H, "class": "chart", role: "img",
-        "aria-label": t("ph.chartAria", { m: byW ? t("ph.mW") : t("ph.mR"), n: it.name }) });
+        "aria-label": t("ph.chartAria", { m: m.aria, n: it.name }) });
       [lo, (lo + hi) / 2, hi].forEach(function (v) {
         root.appendChild(svg("line", { x1: L, x2: W - R, y1: Y(v), y2: Y(v), "class": "grid" }));
-        root.appendChild(svg("text", { x: L - 6, y: Y(v) + 3, "text-anchor": "end", "class": "axis" }, num(Math.round(v * 10) / 10)));
+        root.appendChild(svg("text", { x: L - 6, y: Y(v) + 3, "text-anchor": "end", "class": "axis" }, m.axis(Math.round(v * 10) / 10)));
       });
       root.appendChild(svg("text", { x: L, y: H - 6, "text-anchor": "start", "class": "axis" }, shortDate(pts[0].date)));
       root.appendChild(svg("text", { x: W - R, y: H - 6, "text-anchor": "end", "class": "axis" }, shortDate(pts[pts.length - 1].date)));
       var cross = svg("line", { y1: T, y2: H - B, "class": "cross" });
       root.appendChild(cross);
-      root.appendChild(svg("path", { "class": "ln", d: pts.map(function (p, k) { return (k ? "L" : "M") + X(k).toFixed(1) + " " + Y(val(p)).toFixed(1); }).join(" ") }));
+      root.appendChild(svg("path", { "class": "ln", d: pts.map(function (p, k) { return (k ? "L" : "M") + X(k).toFixed(1) + " " + Y(m.val(p)).toFixed(1); }).join(" ") }));
       var dots = pts.map(function (p, k) {
-        var c = svg("circle", { cx: X(k), cy: Y(val(p)), r: 4, "class": "pt" });
+        var c = svg("circle", { cx: X(k), cy: Y(m.val(p)), r: 4, "class": "pt" });
         root.appendChild(c);
         return c;
       });
       var readout = el("div", "readout");
       var select = function (k) {
+        var p = pts[k];
         cross.setAttribute("x1", X(k)); cross.setAttribute("x2", X(k));
         dots.forEach(function (c, j) { c.setAttribute("r", j === k ? 6 : 4); });
         readout.textContent = "";
-        readout.appendChild(txt(fmt(pts[k].date, { day: "numeric", month: "long" }) + ": "));
-        readout.appendChild(el("b", null, num(val(pts[k])) + " " + unit));
-        readout.appendChild(txt(" · " + pts[k].sets.map(setText).join(" · ")));
+        readout.appendChild(txt(fmt(p.date, { day: "numeric", month: "long" }) + ": "));
+        readout.appendChild(el("b", null, m.show(m.val(p))));
+        var extra = p.sets.map(function (s) { return setText(s, p.type); }).join(" · ");
+        if (type === "cardio" && p.dist > 0) extra += " · " + paceText(p.ttot, p.dist);
+        readout.appendChild(txt(" · " + extra));
       };
       var step = (W - L - R) / (pts.length - 1);
       pts.forEach(function (p, k) {
@@ -1697,7 +1993,9 @@ body.timing .app { padding-bottom: 160px; }
     all.slice(-8).reverse().forEach(function (x) {
       var r = el("div", "hrow");
       r.appendChild(el("span", "d", shortDate(x.date)));
-      r.appendChild(el("span", null, x.sets.map(setText).join(" · ")));
+      var line = x.sets.map(function (s) { return setText(s, x.type); }).join(" · ");
+      if (x.type === "cardio" && x.dist > 0) line += " · " + paceText(x.ttot, x.dist);
+      r.appendChild(el("span", null, line));
       listBox.appendChild(r);
     });
     box.appendChild(listBox);
@@ -1792,17 +2090,18 @@ body.timing .app { padding-bottom: 160px; }
       var prev = lastTime(it.name, cur);
       if (prev) {
         var ph = el("div", "hint", t("lastTime", { d: fmt(prev.date, { day: "numeric", month: "short" }) }));
-        ph.appendChild(el("b", null, prev.sets.map(setText).join(" · ")));
+        ph.appendChild(el("b", null, prev.sets.map(function (x) { return setText(x, prev.type); }).join(" · ")));
         card.appendChild(ph);
       }
-      if (!complete) card.appendChild(weightRow(plan, it, i));
+      var wr = !complete && weightRow(plan, it, i);
+      if (wr) card.appendChild(wr);
       var rows = el("div", "srows"), cnt = Math.max(it.sets, n);
       for (var k = 0; k < cnt; k++) rows.appendChild(setRow(plan, it, i, k, sets));
       card.appendChild(rows);
-      if (complete && n) {
+      if (complete && n && typeOf(it) !== "cardio") {
         var last = sets[n - 1];
-        card.appendChild(btn("again", t("plan.more", { s: kgText(last.w, last.r) }), function () {
-          addSet(it.name, last.w, last.r, cur, restSec, plan);
+        card.appendChild(btn("again", t("plan.more", { s: kgText(last, typeOf(it)) }), function () {
+          addSet(it.name, copySet(last), cur, restSec, plan, typeOf(it));
         }));
       }
       if (prefs.progress && histOpen[hkey]) card.appendChild(historyPanel(it));
@@ -1811,7 +2110,8 @@ body.timing .app { padding-bottom: 160px; }
     if (itemEdit && itemEdit.planId === plan.id && itemEdit.index === -1) list.appendChild(itemEditor(plan));
     box.appendChild(list);
     if (!itemEdit) box.appendChild(btn("again", t("plan.addEx"), function () { openItemEdit(plan, -1); }));
-    box.appendChild(el("div", "hint", t("plan.hint")));
+    box.appendChild(el("div", "hint", t("plan.hint") +
+      (plan.items.some(function (it) { return typeOf(it) === "time"; }) ? " " + t("plan.hintTime") : "")));
   }
 
   function startEdit(plan) {
@@ -1864,7 +2164,7 @@ body.timing .app { padding-bottom: 160px; }
       x.setAttribute("aria-label", t("ed.rmAria", { n: i + 1 }));
       top.appendChild(x);
       row.appendChild(top);
-      row.appendChild(itemFields(it, "ed-" + i + "-"));
+      row.appendChild(itemFields(it, "ed-" + i + "-", renderEditor));
       list.appendChild(row);
     });
     box.appendChild(list);
@@ -2120,7 +2420,7 @@ body.timing .app { padding-bottom: 160px; }
   function renderData() {
     renderQuick(); renderHint(); renderDay(); renderPlan(); renderCalendarTab();
   }
-  function renderAll() { renderDate(); renderData(); renderStatus(); }
+  function renderAll() { renderForm(); renderDate(); renderData(); renderStatus(); }
 
   // ---------- actions ----------
   function go(date) {
@@ -2132,28 +2432,83 @@ body.timing .app { padding-bottom: 160px; }
     calMonth = date.slice(0, 7);
     renderDate(); renderData();
   }
+  // ---------- journal form: exercise type ----------
+  var formType = "w";
+  function compatible(a, b) { return a === b || ((a === "w" || a === "bw") && (b === "w" || b === "bw")); }
+  // The type an exercise name was last used with: from your workouts first, then from the log.
+  function typeOfName(name) {
+    var found = null;
+    plans.some(function (p) { return p.items.some(function (it) { if (same(it.name, name)) { found = typeOf(it); return true; } return false; }); });
+    if (found) return found;
+    var dates = Object.keys(days).sort().reverse();
+    for (var i = 0; i < dates.length; i++) {
+      var ex = days[dates[i]].exercises.filter(function (e) { return same(e.name, name); })[0];
+      if (ex) return typeOf(ex);
+    }
+    return null;
+  }
+  function renderForm() {
+    var box = $("typePick");
+    box.textContent = "";
+    box.setAttribute("aria-label", t("f.type"));
+    TYPES.forEach(function (ty) {
+      var b = btn(null, t("type." + ty), function () { setFormType(ty); });
+      b.id = "ft-" + ty;
+      b.setAttribute("role", "radio");
+      b.setAttribute("aria-checked", ty === formType ? "true" : "false");
+      box.appendChild(b);
+    });
+    var lifts = formType === "w" || formType === "bw";
+    $("fW").hidden = !lifts; $("fR").hidden = !lifts;
+    $("fT").hidden = lifts; $("fD").hidden = formType !== "cardio";
+    $("wLabel").textContent = formType === "bw" ? t("f.extra") : t("f.w");
+    $("wNote").textContent = formType === "bw" ? t("log.extraNote") : t("log.bw");
+    $("tLbl").textContent = formType === "cardio" ? t("f.dur") : t("f.time");
+  }
+  function setFormType(ty) {
+    if (ty === formType) return;
+    var prev = formType;
+    formType = ty;
+    if (ty === "time") $("dur").value = "1:00";
+    if (ty === "cardio") $("dur").value = "30:00";
+    if (ty === "bw" && prev !== "bw") $("weight").value = "0";
+    if (ty === "w" && !(parseNum($("weight").value) > 0)) $("weight").value = dec(20);
+    clearErrors();
+    renderForm();
+  }
   function pick(name) {
     $("exName").value = name;
     clearErrors();
+    var ty = typeOfName(name);
+    if (ty) setFormType(ty);
     var cd = day(cur).exercises.filter(function (e) { return same(e.name, name); })[0];
     var src = cd && cd.sets.length ? cd.sets[cd.sets.length - 1] : null;
     if (!src) { var last = lastTime(name, cur); if (last) src = last.sets[0]; }
-    if (src) { $("weight").value = dec(src.w); $("reps").value = String(src.r); }
+    if (src) {
+      if (formType === "time" || formType === "cardio") {
+        if (src.t) $("dur").value = durText(src.t);
+        $("dist").value = src.d > 0 ? dec(src.d) : "";
+      } else if (src.r) {
+        $("weight").value = dec(src.w); $("reps").value = String(src.r);
+      }
+    }
     renderQuick(); renderHint();
   }
-  function addSet(name, w, r, when, restSec, plan) {
+  function addSet(name, set, when, restSec, plan, type) {
     var date = when || cur;
+    type = TYPES.indexOf(type) >= 0 ? type : "w";
     var d = days[date] || (days[date] = { date: date, exercises: [] });
-    var ex = d.exercises.filter(function (e) { return same(e.name, name); })[0];
+    var ex = d.exercises.filter(function (e) { return same(e.name, name) && compatible(typeOf(e), type); })[0];
     if (!ex) { ex = { name: name, sets: [] }; d.exercises.push(ex); }
-    ex.sets.push({ w: w, r: r });
+    if (type === "w") delete ex.type; else ex.type = type;
+    ex.sets.push(set);
     if (plan) d.plan = { id: plan.id, name: plan.name };
     justAdded = { name: ex.name, index: ex.sets.length - 1 };
     haptic("tap");
     hideToast();
     touch(date);
     renderData();
-    if (date === today()) startRest(restSec);
+    if (date === today() && type !== "cardio") startRest(restSec);
   }
   function removeSet(ei, si, when) {
     var date = when || cur;
@@ -2162,18 +2517,22 @@ body.timing .app { padding-bottom: 160px; }
     var ex = d.exercises[ei], removed = ex.sets.splice(si, 1)[0];
     var exGone = !ex.sets.length;
     if (exGone) d.exercises.splice(ei, 1);
-    undoState = { date: date, name: ex.name, ei: ei, si: si, set: removed, exGone: exGone, plan: d.plan || null };
+    undoState = { date: date, name: ex.name, type: typeOf(ex), ei: ei, si: si, set: removed, exGone: exGone, plan: d.plan || null };
     touch(date);
     renderData();
-    showToast(t("toast.setDel", { s: setText(removed) }));
+    showToast(t("toast.setDel", { s: setText(removed, typeOf(ex)) }));
   }
   function undo() {
     var u = undoState;
     if (!u) return;
     var d = days[u.date] || (days[u.date] = { date: u.date, exercises: [] });
     if (u.plan && !d.plan) d.plan = u.plan;
-    var ex = d.exercises.filter(function (e) { return same(e.name, u.name); })[0];
-    if (!ex) { ex = { name: u.name, sets: [] }; d.exercises.splice(Math.min(u.ei, d.exercises.length), 0, ex); }
+    var ex = d.exercises.filter(function (e) { return same(e.name, u.name) && compatible(typeOf(e), u.type); })[0];
+    if (!ex) {
+      ex = { name: u.name, sets: [] };
+      if (u.type !== "w") ex.type = u.type;
+      d.exercises.splice(Math.min(u.ei, d.exercises.length), 0, ex);
+    }
     ex.sets.splice(Math.min(u.si, ex.sets.length), 0, u.set);
     hideToast();
     touch(u.date);
@@ -2191,6 +2550,8 @@ body.timing .app { padding-bottom: 160px; }
     $("exName").classList.remove("bad");
     $("wBox").classList.remove("bad");
     $("rBox").classList.remove("bad");
+    $("tBox").classList.remove("bad");
+    $("dBox").classList.remove("bad");
   }
 
   // ---------- events ----------
@@ -2198,17 +2559,43 @@ body.timing .app { padding-bottom: 160px; }
     e.preventDefault();
     clearErrors();
     var name = $("exName").value.trim().replace(/\s+/g, " ");
-    var w = $("weight").value.trim() === "" ? 0 : parseNum($("weight").value);
-    var r = Math.round(parseNum($("reps").value));
     if (!name) { $("nameErr").hidden = false; $("exName").classList.add("bad"); $("exName").focus(); return; }
-    if (!(w >= 0) || w > 1000) { $("wBox").classList.add("bad"); $("weight").focus(); return; }
-    if (!(r >= 1) || r > 1000) { $("rBox").classList.add("bad"); $("reps").focus(); return; }
-    addSet(name, Math.round(w * 100) / 100, r);
+    var set;
+    if (formType === "time" || formType === "cardio") {
+      var sec = parseDur($("dur").value, formType === "cardio" ? 60 : 1);
+      if (!(sec >= 1) || sec > 86400) { $("tBox").classList.add("bad"); $("dur").focus(); return; }
+      set = { t: sec };
+      if (formType === "cardio") {
+        var km = $("dist").value.trim() === "" ? 0 : parseNum($("dist").value);
+        if (!(km >= 0) || km > 1000) { $("dBox").classList.add("bad"); $("dist").focus(); return; }
+        set.d = Math.round(km * 100) / 100;
+      }
+    } else {
+      var w = $("weight").value.trim() === "" ? 0 : parseNum($("weight").value);
+      var r = Math.round(parseNum($("reps").value));
+      if (!(w >= 0) || w > 1000) { $("wBox").classList.add("bad"); $("weight").focus(); return; }
+      if (!(r >= 1) || r > 1000) { $("rBox").classList.add("bad"); $("reps").focus(); return; }
+      set = { w: Math.round(w * 100) / 100, r: r };
+    }
+    addSet(name, set, cur, undefined, null, formType);
   });
-  $("exName").addEventListener("input", function () { clearErrors(); renderQuick(); renderHint(); });
+  $("exName").addEventListener("input", function () {
+    clearErrors();
+    var ty = typeOfName($("exName").value);
+    if (ty) setFormType(ty);
+    renderQuick(); renderHint();
+  });
   document.querySelectorAll("[data-step]").forEach(function (b) {
     b.addEventListener("click", function () {
       var input = $(b.getAttribute("data-step")), by = parseFloat(b.getAttribute("data-by"));
+      if (input.id === "dur") {
+        var unit = formType === "cardio" ? 60 : 1;
+        var sec = parseDur(input.value, unit);
+        if (!isFinite(sec)) sec = formType === "cardio" ? 1800 : 60;
+        input.value = durText(Math.max(formType === "cardio" ? 60 : 5, sec + by * (formType === "cardio" ? 4 : 1)));
+        clearErrors();
+        return;
+      }
       var v = parseNum(input.value);
       if (!isFinite(v)) v = 0;
       var min = input.id === "reps" ? 1 : 0;
@@ -2233,11 +2620,15 @@ body.timing .app { padding-bottom: 160px; }
     if (!rest.on) stopRest();
   });
   $("tPlus").addEventListener("click", function () {
+    if (tMode === "work") { cancelWork(); return; }
     tEnd += 30000; tTotal += 30;
     scheduleBeep(Math.max(0, (tEnd - Date.now()) / 1000));
     tick();
   });
-  $("tStop").addEventListener("click", stopRest);
+  $("tStop").addEventListener("click", function () {
+    if (tMode === "work") finishWork((Date.now() - workStart) / 1000);
+    else stopRest();
+  });
   $("gear").addEventListener("click", openSettings);
   TABS.forEach(function (k) {
     $("tabbtn-" + k).addEventListener("click", function () { showTab(k); });
